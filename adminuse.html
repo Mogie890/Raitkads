@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin - Create Shop</title>
+<style>body{font-family:Arial;padding:20px;max-width:800px;margin:auto}input,select{width:100%;padding:10px;margin:5px 0;border:1px solid #ccc;border-radius:5px}button{padding:12px 20px;background:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;margin-top:10px;width:100%}button:disabled{background:#aaa}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#f4f4f4}</style>
+</head>
+
+<script>
+    const SHEET_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
+
+    function viewAllShops(){
+      const tableBody = document.querySelector("tbody") || document.getElementById("shopTable");
+        if(tableBody) tableBody.innerHTML = "<tr><td colspan='9'>Loading...</td></tr>";
+          
+            const cb = "viewCb_"+Date.now();
+              window[cb]=function(data){
+                  console.log("Shops data:", data);
+                      let html = "";
+                          if(!data || data.length <=1){
+                                html = "<tr><td colspan='9'>No shops found. Create one first.</td></tr>";
+                                    } else {
+                                          // data[0] is header, start from 1
+                                                for(let i=1;i<data.length;i++){
+                                                        const r = data[i];
+                                                                html+=`<tr>
+                                                                          <td>${r[0]||''}</td>
+                                                                                    <td>${r[1]||''}</td>
+                                                                                              <td>${r[2]||''}</td>
+                                                                                                        <td>${r[3]||''}</td>
+                                                                                                                  <td>${r[4]||''}</td>
+                                                                                                                            <td>${r[5]||''}</td>
+                                                                                                                                      <td>${r[6]||''}</td>
+                                                                                                                                                <td>${r[7]||''}</td>
+                                                                                                                                                          <td>${r[8]||''}</td>
+                                                                                                                                                                  </tr>`;
+                                                                                                                                                                        }
+                                                                                                                                                                            }
+                                                                                                                                                                                // Find where to put it
+                                                                                                                                                                                    const tbody = document.querySelector("table tbody") || document.querySelector("table");
+                                                                                                                                                                                        if(tbody) {
+                                                                                                                                                                                              if(tbody.tagName=="TBODY") tbody.innerHTML = html;
+                                                                                                                                                                                                    else {
+                                                                                                                                                                                                            // if no tbody, replace last row
+                                                                                                                                                                                                                    let table = document.querySelector("table");
+                                                                                                                                                                                                                            let rows = table.querySelectorAll("tr");
+                                                                                                                                                                                                                                    for(let j=1;j<rows.length;j++) rows[j].remove();
+                                                                                                                                                                                                                                            table.insertAdjacentHTML('beforeend', html);
+                                                                                                                                                                                                                                                  }
+                                                                                                                                                                                                                                                      }
+                                                                                                                                                                                                                                                          delete window[cb];
+                                                                                                                                                                                                                                                              script.remove();
+                                                                                                                                                                                                                                                                };
+                                                                                                                                                                                                                                                                  const script=document.createElement("script");
+                                                                                                                                                                                                                                                                    script.src=`${SHEET_URL}?callback=${cb}`;
+                                                                                                                                                                                                                                                                      document.body.appendChild(script);
+                                                                                                                                                                                                                                                                      }
+
+                                                                                                                                                                                                                                                                      // Connect button
+                                                                                                                                                                                                                                                                      document.addEventListener("DOMContentLoaded", ()=>{
+                                                                                                                                                                                                                                                                        const btn = document.querySelector("button.blue, button:nth-of-type(2)") || document.getElementById("viewBtn");
+                                                                                                                                                                                                                                                                          // Find VIEW ALL SHOPS button by text
+                                                                                                                                                                                                                                                                            const allBtns = document.querySelectorAll("button");
+                                                                                                                                                                                                                                                                              allBtns.forEach(b=>{
+                                                                                                                                                                                                                                                                                  if(b.textContent.includes("VIEW ALL SHOPS")){
+                                                                                                                                                                                                                                                                                        b.onclick = viewAllShops;
+                                                                                                                                                                                                                                                                                            }
+                                                                                                                                                                                                                                                                                              });
+                                                                                                                                                                                                                                                                                              });
+</script>
+<body>
+<h2>Admin - Create Reseller Shop</h2>
+<input id="regShop" placeholder="Shop Name * (e.g. Testing 1)">
+<input id="regOwner" placeholder="Owner Name *">
+<input id="regPhone" placeholder="Phone *">
+<select id="regIDType"><option>NID</option><option>Passport</option><option>Driver License</option></select>
+<input id="regIDNumber" placeholder="ID Number">
+<input id="regProvince" placeholder="Province">
+<input id="regTown" placeholder="Town">
+<input id="regLocation" placeholder="Location">
+<input id="regPass" type="password" placeholder="Password *">
+<button id="createBtn" onclick="register()">CREATE SHOP</button>
+<button onclick="loadShops()" style="background:#007bff">VIEW ALL SHOPS</button>
+<table><thead><tr><th>Shop</th><th>Owner</th><th>Phone</th><th>ID Type</th><th>ID No</th><th>Province</th><th>Town</th><th>Location</th><th>Pass</th></tr></thead><tbody id="shopTableBody"><tr><td colspan="9">Click VIEW ALL SHOPS</td></tr></tbody></table>
+<br><a href="reseller.html">Go to Login Page</a>
+<script src="script2.js"></script>
+</body>
+</html>

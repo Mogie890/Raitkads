@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{font-family:Arial;padding:30px;background:#f4f6f8}
+.box{max-width:350px;margin:80px auto;background:white;padding:25px;border-radius:10px;box-shadow:0 2px 10px #ccc}
+input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:6px}
+button{width:100%;padding:12px;background:#0d47a1;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>Admin Login</h2>
+<input id="user" placeholder="Admin Username">
+<input id="pass" type="password" placeholder="Password">
+<button onclick="login()">LOGIN</button>
+<p id="msg" style="color:red"></p>
+</div>
+<script>
+function login(){
+  // CHANGE THIS PASSWORD!
+    if(document.getElementById("user").value=="telikomadmin" && document.getElementById("pass").value=="Telikom@2026"){
+        sessionStorage.setItem("isAdmin","true");
+            window.location="adminuse.html";
+              } else {
+                  document.getElementById("msg").innerText="Wrong username or password!";
+                    }
+                    }
+                    </script>
+                    </body>
+                    </html>

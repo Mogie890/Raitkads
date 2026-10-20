@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head><title>Telikom Raitkad - Dashboard</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+body{background:#0f172a; color:white; font-family:Arial; padding:20px; margin:0;}
+.card{background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px;}
+.btn{background:#22c55e; color:black; padding:10px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-right:8px;}
+.btn2{background:#334155; color:white; padding:10px 20px; border:none; border-radius:8px; cursor:pointer;}
+</style>
+</head>
+<body>
+<h2>📱 Telikom Raitkad</h2>
+<div class="card" id="shopInfo">Loading...</div>
+<div class="card">
+<h3>Welcome to Reseller Dashboard</h3>
+<p>Track your orders here.</p>
+<div id="myHistoryBox" style="margin-top:20px; background:rgba(255,255,255,0.05); padding:15px; border-radius:12px;">
+  <h3 style="color:white;">📦 My Past Orders</h3>
+  <p id="historyLoading" style="color:#aaa;">Loading your history...</p>
+  <table id="myHistoryTable" border="1" style="width:100%; border-collapse:collapse; display:none; background:white; color:black; border-radius:8px; overflow:hidden;">
+    <thead><tr style="background:#f0f0f0"><th>Date</th><th>Details</th><th>Total</th></tr></thead>
+    <tbody id="historyBody"></tbody>
+  </table>
+</div>
+<button class="btn" onclick="location.href='orders.html'" style="margin-top:15px;">➕ New Order</button>
+<button class="btn2" onclick="logout()">Logout</button>
+</div>
+
+<script>
+const SHEET_URL = "https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
+
+// FIX: Support all storage keys
+const shop = localStorage.getItem("currentShop") || localStorage.getItem("resellerShop") || localStorage.getItem("shopName") || "";
+const shopPhone = localStorage.getItem("shopPhone") || localStorage.getItem("resellerPhone") || "";
+
+if(!shop){
+  window.location.href="reseller.html";
+} else {
+  document.getElementById("shopInfo").innerHTML = "✅ Logged in as: <b>"+shop+"</b><br>📞 "+shopPhone+"<br>📍 Port Moresby";
+}
+
+function logout(){
+  localStorage.clear();
+  window.location.href="reseller.html";
+}
+
+function loadMyHistory(){
+  if(!shopPhone){ document.getElementById("historyLoading").innerText="No phone found - login again"; return; }
+  const cbH="hist_"+Date.now();
+  window[cbH]=function(data){
+    const loading=document.getElementById("historyLoading");
+    if(loading) loading.style.display="none";
+    const table=document.getElementById("myHistoryTable");
+    const tbody=document.getElementById("historyBody");
+    if(!data || data.length<=1){ 
+      if(loading){ loading.style.display="block"; loading.innerText="No past orders yet."; }
+      return; 
+    }
+    let html="";
+    for(let i=data.length-1;i>=1;i--){
+      const d=new Date(data[i][0]).toLocaleDateString();
+      // NEW columns: 6=K3,7=K5,8=K10,9=K20,10=K50,11=K100,12=CustomVal,13=CustomQty,14=Total
+      const k3=data[i][6]||0, k5=data[i][7]||0, k10=data[i][8]||0, k20=data[i][9]||0, k50=data[i][10]||0, k100=data[i][11]||0;
+      const cVal=data[i][12]||0, cQty=data[i][13]||0;
+      let detail = `K3:${k3} K5:${k5} K10:${k10} K20:${k20} K50:${k50} K100:${k100}`;
+      if(cQty>0) detail += ` K${cVal}x${cQty}`;
+      html+=`<tr><td>${d}</td><td>${detail}</td><td><b>K${data[i][14]}</b></td></tr>`;
+    }
+    tbody.innerHTML=html;
+    table.style.display="table";
+    delete window[cbH];
+  };
+  const s=document.createElement("script");
+  s.src=`${SHEET_URL}?type=getMyOrders&shopPhone=${encodeURIComponent(shopPhone)}&callback=${cbH}`;
+  document.body.appendChild(s);
+}
+window.addEventListener("load", ()=>{ setTimeout(loadMyHistory, 1000); });
+</script>
+</body>
+</html>
