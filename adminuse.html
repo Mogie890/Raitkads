@@ -1,30 +1,88 @@
 <!DOCTYPE html>
-<html>
-<head><meta name="viewport" content="width=device-width, initial-scale=1">
-<style>body{font-family:Arial;padding:15px;background:#f5f5f5;margin:0}.top{display:flex;justify-content:space-between;align-items:center;padding:10px 0}.logout{background:#d32f2f;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-weight:bold}.tabs{display:flex;gap:10px;margin:10px 0}.tab-btn{padding:10px 20px;border:none;border-radius:20px;cursor:pointer;font-weight:bold}.active{background:#0d47a1;color:white}.inactive{background:#ddd;color:#333}.card{background:white;padding:12px;border-radius:10px;box-shadow:0 2px 5px #ddd;margin-bottom:10px}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.tools input{flex:1;padding:10px;border:1px solid #ccc;border-radius:6px;min-width:150px}.tools button{padding:10px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}.green{background:#2e7d32;color:white;width:100%}.blue{background:#0d47a1;color:white}.orange{background:#ef6c00;color:white}table{width:100%;background:white;border-collapse:collapse;display:block;overflow-x:auto;white-space:nowrap}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#0d47a1;color:white} .delBtn{background:#d32f2f;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer}</style>
-</head>
-<body>
-<script>if(sessionStorage.getItem("isAdmin")!="true"){window.location="adminlogin.html";}</script>
-<div class="top"><h2 style="margin:0">Admin Dashboard</h2><button class="logout" onclick="logout()">Logout</button></div>
-<div class="tabs"><button id="btnCust" class="tab-btn active" onclick="showTab('customers')">Customers List</button><button id="btnOrder" class="tab-btn inactive" onclick="showTab('orders')">Order History</button></div>
-<div id="customersTab"><div class="card"><div class="tools"><input id="searchCust" placeholder="Search shop, owner, phone, town..." onkeyup="filterCust()"><button class="blue" onclick="loadShops()">🔄 VIEW</button><button class="orange" onclick="exportTable('custTable','Telikom_Customers.csv')">⬇️ Export</button></div><button class="green" onclick="loadShops()">VIEW ALL SHOPS</button></div><table id="custTable"></table></div>
-<div id="ordersTab" style="display:none"><div class="card"><div style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;"><h3 style="margin-top:0">+ Create New Reseller & Send WhatsApp</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input id="newShop" placeholder="Shop Name *"><input id="newOwner" placeholder="Owner Name"><input id="newPhone" placeholder="Phone 6757xxxxxxx *"><input id="newPass" placeholder="Password *"><input id="newIdType" placeholder="ID Type (NID/Driver)"><input id="newIdNo" placeholder="ID No"><input id="newProvince" placeholder="Province"><input id="newTown" placeholder="Town"><input id="newLocation" placeholder="Location" style="grid-column:span 2"></div><button class="green" style="background:#25D366;margin-top:10px;width:100%;padding:12px;font-size:15px" onclick="createResellerFromForm()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button><p style="font-size:12px;color:#666;margin-top:5px">Will save to Sheet + open WhatsApp to reseller with login details</p></div><div class="tools"><input id="searchOrder" placeholder="Search shop, location, sales rep..." onkeyup="filterOrder()"><button class="blue" onclick="loadOrders()">🔄 VIEW ORDERS</button><button class="orange" onclick="exportTable('orderTable','Telikom_Orders.csv')">⬇️ Export</button></div></div><table id="orderTable"></table></div>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard</title>
+<style>
+body{font-family:Arial;margin:0;background:#f5f5f5} .header{background:#0d47a1;color:white;padding:15px;display:flex;justify-content:space-between;align-items:center}
+.tabs{padding:15px;display:flex;gap:10px} .tab{padding:10px 20px;border-radius:20px;border:none;cursor:pointer;font-weight:bold} .active{background:#0d47a1;color:white} .inactive{background:#ddd}
+.container{margin:15px;background:white;padding:15px;border-radius:8px} input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:5px;box-sizing:border-box}
+button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bold} .green{background:#2e7d32;color:white;width:100%;padding:12px;margin-top:10px} .blue{background:#0d47a1;color:white} .orange{background:#ef6c00;color:white}
+#orderTab{display:none}
+.shop-card{border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:6px}
+</style></head><body>
+<div class="header"><b>Admin Dashboard</b><button onclick="localStorage.clear();location.href='adminlogin.html'" style="background:#c62828;color:white">Logout</button></div>
+<div class="tabs"><button id="btnCust" class="tab active" onclick="showTab('cust')">Customers List</button><button id="btnOrder" class="tab inactive" onclick="showTab('order')">Order History</button></div>
+
+<div id="custTab" class="container">
+<div style="display:flex;gap:5px"><input id="search" placeholder="Search shop, owner, phone, town..."><button class="blue" onclick="viewShops()">🔄 VIEW</button><button class="orange" onclick="exportExcel()">📥 Export</button></div>
+<button class="green" onclick="viewShops()">VIEW ALL SHOPS</button>
+<div id="shopsList" style="margin-top:15px"></div>
+</div>
+
+<div id="orderTab" class="container">
+<h3>Create New Reseller</h3>
+<input id="shopName" placeholder="Shop Name *">
+<input id="owner" placeholder="Owner Name *">
+<input id="shopPhone" placeholder="Shop Phone * (e.g. 67570000000)">
+<select id="idType"><option>NID</option><option>Passport</option><option>Driver License</option></select>
+<input id="idNo" placeholder="ID Number">
+<input id="province" placeholder="Province">
+<input id="town" placeholder="Town">
+<input id="location" placeholder="Location / Address">
+<input id="password" placeholder="Create Password *">
+<button class="green" onclick="createShop()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button>
+<div id="ordersList" style="margin-top:20px"><h3>Recent Orders</h3><button class="blue" onclick="loadOrders()">View Orders</button><div id="ordersData"></div></div>
+</div>
+
 <script>
 const SHEET_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
 const RESELLER_LOGIN_LINK="https://mogie890.github.io/Raitkads/reseller.html";
-let allShops=[],allOrders=[];
-function showTab(t){document.getElementById("customersTab").style.display=t=="customers"?"block":"none";document.getElementById("ordersTab").style.display=t=="orders"?"block":"none";document.getElementById("btnCust").className=t=="customers"?"tab-btn active":"tab-btn inactive";document.getElementById("btnOrder").className=t=="orders"?"tab-btn active":"tab-btn inactive";if(t=="orders")loadOrders();if(t=="customers")loadShops();}
-function loadShops(){const cb="cb_"+Date.now();window[cb]=function(data){renderCust(data);delete window[cb];};const s=document.createElement("script");s.src=`${SHEET_URL}?callback=${cb}`;document.body.appendChild(s);}
-function renderCust(data){let html="<tr><th>#</th><th>Shop</th><th>Owner</th><th>Phone</th><th>ID Type</th><th>ID No</th><th>Province</th><th>Town</th><th>Location</th><th>Pass</th><th>Action</th></tr>";for(let i=1;i<data.length;i++){let r=data[i];html+=`<tr class="custRow"><td>${i}</td><td>${r[0]||''}</td><td>${r[1]||''}</td><td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||''}</td><td>${r[5]||''}</td><td>${r[6]||''}</td><td>${r[7]||''}</td><td>${r[8]||''}</td><td><button class="delBtn" onclick="deleteShop(${i+1})">Delete</button></td></tr>";}document.getElementById("custTable").innerHTML=html;}
-function filterCust(){let q=document.getElementById("searchCust").value.toLowerCase();document.querySelectorAll(".custRow").forEach(row=>{row.style.display=row.innerText.toLowerCase().includes(q)?"":"none";});}
-function deleteShop(rowIndex){if(!confirm("Delete this shop?"))return;const cb="del_"+Date.now();window[cb]=function(res){alert("Deleted!");loadShops();};const s=document.createElement("script");s.src=`${SHEET_URL}?type=deleteShop&rowIndex=${rowIndex}&callback=${cb}`;document.body.appendChild(s);}
-function loadOrders(){const cb="cb2_"+Date.now();window[cb]=function(data){renderOrders(data);};const s=document.createElement("script");s.src=`${SHEET_URL}?type=getOrders&callback=${cb}`;document.body.appendChild(s);}
-function renderOrders(data){let html="<tr><th>Date</th><th>Shop</th><th>Phone</th><th>Location</th><th>Rep</th><th>K3</th><th>K5</th><th>K10</th><th>K20</th><th>K50</th><th>K100</th><th>Custom</th><th>Total</th></tr>";for(let i=1;i<data.length;i++){let r=data[i];let d=new Date(r[0]).toLocaleString();let custom=(r[13]||0)>0?`K${r[12]} x ${r[13]}`:"-";html+=`<tr class="orderRow"><td>${d}</td><td>${r[1]||''}</td><td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||''} (${r[5]||''})</td><td>${r[6]||0}</td><td>${r[7]||0}</td><td>${r[8]||0}</td><td>${r[9]||0}</td><td>${r[10]||0}</td><td>${r[11]||0}</td><td>${custom}</td><td><b>K${r[14]||0}</b></td></tr>";}document.getElementById("orderTable").innerHTML=html;}
-function filterOrder(){let q=document.getElementById("searchOrder").value.toLowerCase();document.querySelectorAll(".orderRow").forEach(row=>{row.style.display=row.innerText.toLowerCase().includes(q)?"":"none";});}
-function exportTable(tableId,filename){let table=document.getElementById(tableId);let csv=[];for(let row of table.rows){let cols=[];for(let cell of row.cells){let txt=cell.innerText.replace(/"/g,'""');cols.push(`"${txt}"`);}csv.push(cols.join(","));}let csvFile=new Blob([csv.join("\n")],{type:"text/csv"});let link=document.createElement("a");link.href=URL.createObjectURL(csvFile);link.download=filename;link.click();}
-function logout(){sessionStorage.removeItem("isAdmin");window.location="adminlogin.html";}
-function createResellerFromForm(){const shop=document.getElementById("newShop").value.trim();const owner=document.getElementById("newOwner").value.trim();const phone=document.getElementById("newPhone").value.trim();const pass=document.getElementById("newPass").value.trim();const idType=document.getElementById("newIdType").value.trim();const idNo=document.getElementById("newIdNo").value.trim();const province=document.getElementById("newProvince").value.trim();const town=document.getElementById("newTown").value.trim();const location=document.getElementById("newLocation").value.trim();if(!phone||!pass||!shop){return alert("Shop Name, Phone & Password required!");}const cb="create_"+Date.now();window[cb]=function(res){let msg=`*TELIKOM RAITKAD - Welcome ${owner||shop}!*%0A%0AYour reseller account created!%0A%0A*Shop:* ${shop}%0A*Owner:* ${owner}%0A*Phone:* ${phone}%0A*Password:* ${pass}%0A%0A*Login here:*%0A${RESELLER_LOGIN_LINK}%0A%0ALogin with:%0A Shop Name: *${shop}*%0A Password: *${pass}*%0A%0AThank you for partnering with Telikom!`;let cleanPhone=phone.replace(/[^0-9]/g,'');window.open(`https://wa.me/${cleanPhone}?text=${msg}`,"_blank");alert("✅ "+shop+" saved + WhatsApp opened to "+phone);loadShops();document.querySelectorAll('#newShop,#newOwner,#newPhone,#newPass,#newIdType,#newIdNo,#newProvince,#newTown,#newLocation').forEach(i=>i.value='');};const s=document.createElement("script");s.src=`${SHEET_URL}?type=createReseller&shopName=${encodeURIComponent(shop)}&owner=${encodeURIComponent(owner)}&shopPhone=${encodeURIComponent(phone)}&password=${encodeURIComponent(pass)}&idType=${encodeURIComponent(idType)}&idNo=${encodeURIComponent(idNo)}&province=${encodeURIComponent(province)}&town=${encodeURIComponent(town)}&location=${encodeURIComponent(location)}&callback=${cb}`;document.body.appendChild(s);}
-loadShops();
-</script>
-</body>
-</html>
+
+function showTab(t){
+document.getElementById('custTab').style.display=t==='cust'?'block':'none';
+document.getElementById('orderTab').style.display=t==='order'?'block':'none';
+document.getElementById('btnCust').className=t==='cust'?'tab active':'tab inactive';
+document.getElementById('btnOrder').className=t==='order'?'tab active':'tab inactive';
+}
+function viewShops(){
+document.getElementById('shopsList').innerHTML='Loading...';
+var s=document.createElement('script');
+s.src=SHEET_URL+'?callback=displayShops&_='+Date.now();
+document.body.appendChild(s);
+}
+function displayShops(data){
+var html=''; if(!data||data.length<=1){html='<p>No shops found. Create one in Order History tab!</p>';}
+else{for(var i=1;i<data.length;i++){var r=data[i]; if(!r[0])continue;
+html+='<div class="shop-card"><b>'+r[0]+'</b> ('+r[1]+')<br>📞 '+r[2]+' | 📍 '+(r[6]||'')+' '+(r[5]||'')+'<br>Pass: '+(r[8]||'')+' <button onclick="deleteShop('+(i+1)+')" style="float:right;background:red;color:white">Delete</button></div>';
+}} document.getElementById('shopsList').innerHTML=html;
+}
+function createShop(){
+var shopName=document.getElementById('shopName').value.trim();
+var owner=document.getElementById('owner').value.trim();
+var shopPhone=document.getElementById('shopPhone').value.trim();
+var password=document.getElementById('password').value.trim();
+if(!shopName||!shopPhone||!password){alert('Fill Shop Name, Phone, Password!');return;}
+var p='&shopName='+encodeURIComponent(shopName)+'&owner='+encodeURIComponent(owner)+'&shopPhone='+encodeURIComponent(shopPhone)+'&idType='+encodeURIComponent(document.getElementById('idType').value)+'&idNo='+encodeURIComponent(document.getElementById('idNo').value)+'&province='+encodeURIComponent(document.getElementById('province').value)+'&town='+encodeURIComponent(document.getElementById('town').value)+'&location='+encodeURIComponent(document.getElementById('location').value)+'&password='+encodeURIComponent(password);
+var s=document.createElement('script');
+s.src=SHEET_URL+'?type=createReseller&callback=afterCreate'+p+'&_='+Date.now();
+document.body.appendChild(s);
+window._newShop={shopName:shopName,password:password,phone:shopPhone};
+}
+function afterCreate(res){
+alert('Shop Created! Opening WhatsApp...');
+var msg='*TELIKOM RAITKAD - Your Shop Login*%0A%0AShop: '+encodeURIComponent(window._newShop.shopName)+'%0APassword: '+encodeURIComponent(window._newShop.password)+'%0A%0ALogin here: '+encodeURIComponent(RESELLER_LOGIN_LINK)+'%0A%0AThank you!';
+var wa='https://wa.me/'+window._newShop.phone.replace(/[^0-9]/g,'')+'?text='+msg;
+window.open(wa,'_blank');
+document.getElementById('shopName').value='';document.getElementById('shopPhone').value='';document.getElementById('password').value='';
+}
+function deleteShop(row){
+if(!confirm('Delete this shop?'))return;
+var s=document.createElement('script'); s.src=SHEET_URL+'?type=deleteShop&rowIndex='+row+'&callback=viewShops&_='+Date.now(); document.body.appendChild(s);
+}
+function loadOrders(){
+var s=document.createElement('script'); s.src=SHEET_URL+'?type=getOrders&callback=showOrders&_='+Date.now(); document.body.appendChild(s);
+}
+function showOrders(data){
+document.getElementById('ordersData').innerHTML='<pre>'+JSON.stringify(data,null,2)+'</pre>';
+}
+function exportExcel(){viewShops(); setTimeout(()=>{alert('Export: Use Google Sheet File > Download')},500);}
+if(!localStorage.getItem('admin')){location.href='adminlogin.html';}
+</script></body></html>
