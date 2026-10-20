@@ -2,22 +2,23 @@
 <html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard</title>
 <style>
 body{font-family:Arial;margin:0;background:#f5f5f5} .header{background:#0d47a1;color:white;padding:15px;display:flex;justify-content:space-between;align-items:center}
-.tabs{padding:15px;display:flex;gap:10px} .tab{padding:10px 20px;border-radius:20px;border:none;cursor:pointer;font-weight:bold} .active{background:#0d47a1;color:white} .inactive{background:#ddd}
+.tabs{padding:15px;display:flex;gap:8px;flex-wrap:wrap} .tab{padding:10px 15px;border-radius:20px;border:none;cursor:pointer;font-weight:bold;font-size:13px} .active{background:#0d47a1;color:white} .inactive{background:#ddd}
 .container{margin:15px;background:white;padding:15px;border-radius:8px} input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:5px;box-sizing:border-box}
 button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bold} .green{background:#2e7d32;color:white;width:100%;padding:12px;margin-top:10px} .blue{background:#0d47a1;color:white} .orange{background:#ef6c00;color:white}
-#orderTab{display:none}
+#custTab{display:none} #orderTab{display:none}
 .shop-card{border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:6px}
+.order-card{border-left:4px solid #0d47a1;padding:8px;margin:8px 0;background:#fafafa}
 </style></head><body>
 <div class="header"><b>Admin Dashboard</b><button onclick="localStorage.clear();location.href='adminlogin.html'" style="background:#c62828;color:white">Logout</button></div>
-<div class="tabs"><button id="btnCust" class="tab active" onclick="showTab('cust')">Customers List</button><button id="btnOrder" class="tab inactive" onclick="showTab('order')">Order History</button></div>
 
-<div id="custTab" class="container">
-<div style="display:flex;gap:5px"><input id="search" placeholder="Search shop, owner, phone, town..."><button class="blue" onclick="viewShops()">🔄 VIEW</button><button class="orange" onclick="exportExcel()">📥 Export</button></div>
-<button class="green" onclick="viewShops()">VIEW ALL SHOPS</button>
-<div id="shopsList" style="margin-top:15px"></div>
+<div class="tabs">
+<button id="btnCreate" class="tab active" onclick="showTab('create')">➕ Create Customer</button>
+<button id="btnCust" class="tab inactive" onclick="showTab('cust')">👥 Customer List</button>
+<button id="btnOrder" class="tab inactive" onclick="showTab('order')">📦 Order History</button>
 </div>
 
-<div id="orderTab" class="container">
+<!-- TAB 1 -->
+<div id="createTab" class="container">
 <h3>Create New Reseller</h3>
 <input id="shopName" placeholder="Shop Name *">
 <input id="owner" placeholder="Owner Name *">
@@ -29,7 +30,20 @@ button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bol
 <input id="location" placeholder="Location / Address">
 <input id="password" placeholder="Create Password *">
 <button class="green" onclick="createShop()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button>
-<div id="ordersList" style="margin-top:20px"><h3>Recent Orders</h3><button class="blue" onclick="loadOrders()">View Orders</button><div id="ordersData"></div></div>
+<div id="createMsg" style="margin-top:10px"></div>
+</div>
+
+<!-- TAB 2 -->
+<div id="custTab" class="container">
+<div style="display:flex;gap:5px"><input id="search" placeholder="Search shop, owner, phone, town..."><button class="blue" onclick="viewShops()">🔄 VIEW</button><button class="orange" onclick="exportExcel()">📥 Export</button></div>
+<button class="green" onclick="viewShops()">VIEW ALL SHOPS</button>
+<div id="shopsList" style="margin-top:15px"></div>
+</div>
+
+<!-- TAB 3 -->
+<div id="orderTab" class="container">
+<h3>Recent Orders</h3><button class="blue" onclick="loadOrders()">🔄 View Orders</button>
+<div id="ordersData" style="margin-top:15px">No orders loaded</div>
 </div>
 
 <script>
@@ -37,10 +51,14 @@ const SHEET_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_p
 const RESELLER_LOGIN_LINK="https://mogie890.github.io/Raitkads/reseller.html";
 
 function showTab(t){
+document.getElementById('createTab').style.display=t==='create'?'block':'none';
 document.getElementById('custTab').style.display=t==='cust'?'block':'none';
 document.getElementById('orderTab').style.display=t==='order'?'block':'none';
+document.getElementById('btnCreate').className=t==='create'?'tab active':'tab inactive';
 document.getElementById('btnCust').className=t==='cust'?'tab active':'tab inactive';
 document.getElementById('btnOrder').className=t==='order'?'tab active':'tab inactive';
+if(t==='cust')viewShops();
+if(t==='order')loadOrders();
 }
 function viewShops(){
 document.getElementById('shopsList').innerHTML='Loading...';
@@ -49,40 +67,12 @@ s.src=SHEET_URL+'?callback=displayShops&_='+Date.now();
 document.body.appendChild(s);
 }
 function displayShops(data){
-var html=''; if(!data||data.length<=1){html='<p>No shops found. Create one in Order History tab!</p>';}
+var html=''; if(!data||data.length<=1){html='<p>No shops found. Create one in Create Customer tab!</p>';}
 else{for(var i=1;i<data.length;i++){var r=data[i]; if(!r[0])continue;
-html+='<div class="shop-card"><b>'+r[0]+'</b> ('+r[1]+')<br>📞 '+r[2]+' | 📍 '+(r[6]||'')+' '+(r[5]||'')+'<br>Pass: '+(r[8]||'')+' <button onclick="deleteShop('+(i+1)+')" style="float:right;background:red;color:white">Delete</button></div>';
+html+='<div class="shop-card"><b>'+r[0]+'</b> ('+r[1]+')<br>📞 '+r[2]+' | 📍 '+(r[6]||'')+' '+(r[5]||'')+'<br>Pass: '+(r[8]||'')+' <button onclick="deleteShop('+(i+1)+')" style="float:right;background:red;color:white;padding:5px 10px">Delete</button></div>';
 }} document.getElementById('shopsList').innerHTML=html;
 }
 function createShop(){
 var shopName=document.getElementById('shopName').value.trim();
 var owner=document.getElementById('owner').value.trim();
-var shopPhone=document.getElementById('shopPhone').value.trim();
-var password=document.getElementById('password').value.trim();
-if(!shopName||!shopPhone||!password){alert('Fill Shop Name, Phone, Password!');return;}
-var p='&shopName='+encodeURIComponent(shopName)+'&owner='+encodeURIComponent(owner)+'&shopPhone='+encodeURIComponent(shopPhone)+'&idType='+encodeURIComponent(document.getElementById('idType').value)+'&idNo='+encodeURIComponent(document.getElementById('idNo').value)+'&province='+encodeURIComponent(document.getElementById('province').value)+'&town='+encodeURIComponent(document.getElementById('town').value)+'&location='+encodeURIComponent(document.getElementById('location').value)+'&password='+encodeURIComponent(password);
-var s=document.createElement('script');
-s.src=SHEET_URL+'?type=createReseller&callback=afterCreate'+p+'&_='+Date.now();
-document.body.appendChild(s);
-window._newShop={shopName:shopName,password:password,phone:shopPhone};
-}
-function afterCreate(res){
-alert('Shop Created! Opening WhatsApp...');
-var msg='*TELIKOM RAITKAD - Your Shop Login*%0A%0AShop: '+encodeURIComponent(window._newShop.shopName)+'%0APassword: '+encodeURIComponent(window._newShop.password)+'%0A%0ALogin here: '+encodeURIComponent(RESELLER_LOGIN_LINK)+'%0A%0AThank you!';
-var wa='https://wa.me/'+window._newShop.phone.replace(/[^0-9]/g,'')+'?text='+msg;
-window.open(wa,'_blank');
-document.getElementById('shopName').value='';document.getElementById('shopPhone').value='';document.getElementById('password').value='';
-}
-function deleteShop(row){
-if(!confirm('Delete this shop?'))return;
-var s=document.createElement('script'); s.src=SHEET_URL+'?type=deleteShop&rowIndex='+row+'&callback=viewShops&_='+Date.now(); document.body.appendChild(s);
-}
-function loadOrders(){
-var s=document.createElement('script'); s.src=SHEET_URL+'?type=getOrders&callback=showOrders&_='+Date.now(); document.body.appendChild(s);
-}
-function showOrders(data){
-document.getElementById('ordersData').innerHTML='<pre>'+JSON.stringify(data,null,2)+'</pre>';
-}
-function exportExcel(){viewShops(); setTimeout(()=>{alert('Export: Use Google Sheet File > Download')},500);}
-if(!localStorage.getItem('admin')){location.href='adminlogin.html';}
-</script></body></html>
+var shop
