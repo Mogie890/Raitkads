@@ -1,88 +1,30 @@
 <!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Admin - Create Shop</title>
-<style>body{font-family:Arial;padding:20px;max-width:800px;margin:auto}input,select{width:100%;padding:10px;margin:5px 0;border:1px solid #ccc;border-radius:5px}button{padding:12px 20px;background:#28a745;color:white;border:none;border-radius:5px;cursor:pointer;margin-top:10px;width:100%}button:disabled{background:#aaa}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #ddd;padding:8px;font-size:12px}th{background:#f4f4f4}</style>
+<head><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>body{font-family:Arial;padding:15px;background:#f5f5f5;margin:0}.top{display:flex;justify-content:space-between;align-items:center;padding:10px 0}.logout{background:#d32f2f;color:white;padding:6px 12px;border:none;border-radius:5px;cursor:pointer;font-weight:bold}.tabs{display:flex;gap:10px;margin:10px 0}.tab-btn{padding:10px 20px;border:none;border-radius:20px;cursor:pointer;font-weight:bold}.active{background:#0d47a1;color:white}.inactive{background:#ddd;color:#333}.card{background:white;padding:12px;border-radius:10px;box-shadow:0 2px 5px #ddd;margin-bottom:10px}.tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.tools input{flex:1;padding:10px;border:1px solid #ccc;border-radius:6px;min-width:150px}.tools button{padding:10px 14px;border:none;border-radius:6px;font-weight:bold;cursor:pointer}.green{background:#2e7d32;color:white;width:100%}.blue{background:#0d47a1;color:white}.orange{background:#ef6c00;color:white}table{width:100%;background:white;border-collapse:collapse;display:block;overflow-x:auto;white-space:nowrap}th,td{border:1px solid #ddd;padding:8px;font-size:12px;text-align:left}th{background:#0d47a1;color:white} .delBtn{background:#d32f2f;color:white;border:none;padding:5px 8px;border-radius:4px;cursor:pointer}</style>
 </head>
-
-<script>
-    const SHEET_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
-
-    function viewAllShops(){
-      const tableBody = document.querySelector("tbody") || document.getElementById("shopTable");
-        if(tableBody) tableBody.innerHTML = "<tr><td colspan='9'>Loading...</td></tr>";
-          
-            const cb = "viewCb_"+Date.now();
-              window[cb]=function(data){
-                  console.log("Shops data:", data);
-                      let html = "";
-                          if(!data || data.length <=1){
-                                html = "<tr><td colspan='9'>No shops found. Create one first.</td></tr>";
-                                    } else {
-                                          // data[0] is header, start from 1
-                                                for(let i=1;i<data.length;i++){
-                                                        const r = data[i];
-                                                                html+=`<tr>
-                                                                          <td>${r[0]||''}</td>
-                                                                                    <td>${r[1]||''}</td>
-                                                                                              <td>${r[2]||''}</td>
-                                                                                                        <td>${r[3]||''}</td>
-                                                                                                                  <td>${r[4]||''}</td>
-                                                                                                                            <td>${r[5]||''}</td>
-                                                                                                                                      <td>${r[6]||''}</td>
-                                                                                                                                                <td>${r[7]||''}</td>
-                                                                                                                                                          <td>${r[8]||''}</td>
-                                                                                                                                                                  </tr>`;
-                                                                                                                                                                        }
-                                                                                                                                                                            }
-                                                                                                                                                                                // Find where to put it
-                                                                                                                                                                                    const tbody = document.querySelector("table tbody") || document.querySelector("table");
-                                                                                                                                                                                        if(tbody) {
-                                                                                                                                                                                              if(tbody.tagName=="TBODY") tbody.innerHTML = html;
-                                                                                                                                                                                                    else {
-                                                                                                                                                                                                            // if no tbody, replace last row
-                                                                                                                                                                                                                    let table = document.querySelector("table");
-                                                                                                                                                                                                                            let rows = table.querySelectorAll("tr");
-                                                                                                                                                                                                                                    for(let j=1;j<rows.length;j++) rows[j].remove();
-                                                                                                                                                                                                                                            table.insertAdjacentHTML('beforeend', html);
-                                                                                                                                                                                                                                                  }
-                                                                                                                                                                                                                                                      }
-                                                                                                                                                                                                                                                          delete window[cb];
-                                                                                                                                                                                                                                                              script.remove();
-                                                                                                                                                                                                                                                                };
-                                                                                                                                                                                                                                                                  const script=document.createElement("script");
-                                                                                                                                                                                                                                                                    script.src=`${SHEET_URL}?callback=${cb}`;
-                                                                                                                                                                                                                                                                      document.body.appendChild(script);
-                                                                                                                                                                                                                                                                      }
-
-                                                                                                                                                                                                                                                                      // Connect button
-                                                                                                                                                                                                                                                                      document.addEventListener("DOMContentLoaded", ()=>{
-                                                                                                                                                                                                                                                                        const btn = document.querySelector("button.blue, button:nth-of-type(2)") || document.getElementById("viewBtn");
-                                                                                                                                                                                                                                                                          // Find VIEW ALL SHOPS button by text
-                                                                                                                                                                                                                                                                            const allBtns = document.querySelectorAll("button");
-                                                                                                                                                                                                                                                                              allBtns.forEach(b=>{
-                                                                                                                                                                                                                                                                                  if(b.textContent.includes("VIEW ALL SHOPS")){
-                                                                                                                                                                                                                                                                                        b.onclick = viewAllShops;
-                                                                                                                                                                                                                                                                                            }
-                                                                                                                                                                                                                                                                                              });
-                                                                                                                                                                                                                                                                                              });
-</script>
 <body>
-<h2>Admin - Create Reseller Shop</h2>
-<input id="regShop" placeholder="Shop Name * (e.g. Testing 1)">
-<input id="regOwner" placeholder="Owner Name *">
-<input id="regPhone" placeholder="Phone *">
-<select id="regIDType"><option>NID</option><option>Passport</option><option>Driver License</option></select>
-<input id="regIDNumber" placeholder="ID Number">
-<input id="regProvince" placeholder="Province">
-<input id="regTown" placeholder="Town">
-<input id="regLocation" placeholder="Location">
-<input id="regPass" type="password" placeholder="Password *">
-<button id="createBtn" onclick="register()">CREATE SHOP</button>
-<button onclick="loadShops()" style="background:#007bff">VIEW ALL SHOPS</button>
-<table><thead><tr><th>Shop</th><th>Owner</th><th>Phone</th><th>ID Type</th><th>ID No</th><th>Province</th><th>Town</th><th>Location</th><th>Pass</th></tr></thead><tbody id="shopTableBody"><tr><td colspan="9">Click VIEW ALL SHOPS</td></tr></tbody></table>
-<br><a href="reseller.html">Go to Login Page</a>
-<script src="script2.js"></script>
+<script>if(sessionStorage.getItem("isAdmin")!="true"){window.location="adminlogin.html";}</script>
+<div class="top"><h2 style="margin:0">Admin Dashboard</h2><button class="logout" onclick="logout()">Logout</button></div>
+<div class="tabs"><button id="btnCust" class="tab-btn active" onclick="showTab('customers')">Customers List</button><button id="btnOrder" class="tab-btn inactive" onclick="showTab('orders')">Order History</button></div>
+<div id="customersTab"><div class="card"><div class="tools"><input id="searchCust" placeholder="Search shop, owner, phone, town..." onkeyup="filterCust()"><button class="blue" onclick="loadShops()">🔄 VIEW</button><button class="orange" onclick="exportTable('custTable','Telikom_Customers.csv')">⬇️ Export</button></div><button class="green" onclick="loadShops()">VIEW ALL SHOPS</button></div><table id="custTable"></table></div>
+<div id="ordersTab" style="display:none"><div class="card"><div style="background:#f9f9f9;padding:15px;border-radius:8px;margin-bottom:15px;"><h3 style="margin-top:0">+ Create New Reseller & Send WhatsApp</h3><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"><input id="newShop" placeholder="Shop Name *"><input id="newOwner" placeholder="Owner Name"><input id="newPhone" placeholder="Phone 6757xxxxxxx *"><input id="newPass" placeholder="Password *"><input id="newIdType" placeholder="ID Type (NID/Driver)"><input id="newIdNo" placeholder="ID No"><input id="newProvince" placeholder="Province"><input id="newTown" placeholder="Town"><input id="newLocation" placeholder="Location" style="grid-column:span 2"></div><button class="green" style="background:#25D366;margin-top:10px;width:100%;padding:12px;font-size:15px" onclick="createResellerFromForm()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button><p style="font-size:12px;color:#666;margin-top:5px">Will save to Sheet + open WhatsApp to reseller with login details</p></div><div class="tools"><input id="searchOrder" placeholder="Search shop, location, sales rep..." onkeyup="filterOrder()"><button class="blue" onclick="loadOrders()">🔄 VIEW ORDERS</button><button class="orange" onclick="exportTable('orderTable','Telikom_Orders.csv')">⬇️ Export</button></div></div><table id="orderTable"></table></div>
+<script>
+const SHEET_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
+const RESELLER_LOGIN_LINK="https://mogie890.github.io/Raitkads/reseller.html";
+let allShops=[],allOrders=[];
+function showTab(t){document.getElementById("customersTab").style.display=t=="customers"?"block":"none";document.getElementById("ordersTab").style.display=t=="orders"?"block":"none";document.getElementById("btnCust").className=t=="customers"?"tab-btn active":"tab-btn inactive";document.getElementById("btnOrder").className=t=="orders"?"tab-btn active":"tab-btn inactive";if(t=="orders")loadOrders();if(t=="customers")loadShops();}
+function loadShops(){const cb="cb_"+Date.now();window[cb]=function(data){renderCust(data);delete window[cb];};const s=document.createElement("script");s.src=`${SHEET_URL}?callback=${cb}`;document.body.appendChild(s);}
+function renderCust(data){let html="<tr><th>#</th><th>Shop</th><th>Owner</th><th>Phone</th><th>ID Type</th><th>ID No</th><th>Province</th><th>Town</th><th>Location</th><th>Pass</th><th>Action</th></tr>";for(let i=1;i<data.length;i++){let r=data[i];html+=`<tr class="custRow"><td>${i}</td><td>${r[0]||''}</td><td>${r[1]||''}</td><td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||''}</td><td>${r[5]||''}</td><td>${r[6]||''}</td><td>${r[7]||''}</td><td>${r[8]||''}</td><td><button class="delBtn" onclick="deleteShop(${i+1})">Delete</button></td></tr>";}document.getElementById("custTable").innerHTML=html;}
+function filterCust(){let q=document.getElementById("searchCust").value.toLowerCase();document.querySelectorAll(".custRow").forEach(row=>{row.style.display=row.innerText.toLowerCase().includes(q)?"":"none";});}
+function deleteShop(rowIndex){if(!confirm("Delete this shop?"))return;const cb="del_"+Date.now();window[cb]=function(res){alert("Deleted!");loadShops();};const s=document.createElement("script");s.src=`${SHEET_URL}?type=deleteShop&rowIndex=${rowIndex}&callback=${cb}`;document.body.appendChild(s);}
+function loadOrders(){const cb="cb2_"+Date.now();window[cb]=function(data){renderOrders(data);};const s=document.createElement("script");s.src=`${SHEET_URL}?type=getOrders&callback=${cb}`;document.body.appendChild(s);}
+function renderOrders(data){let html="<tr><th>Date</th><th>Shop</th><th>Phone</th><th>Location</th><th>Rep</th><th>K3</th><th>K5</th><th>K10</th><th>K20</th><th>K50</th><th>K100</th><th>Custom</th><th>Total</th></tr>";for(let i=1;i<data.length;i++){let r=data[i];let d=new Date(r[0]).toLocaleString();let custom=(r[13]||0)>0?`K${r[12]} x ${r[13]}`:"-";html+=`<tr class="orderRow"><td>${d}</td><td>${r[1]||''}</td><td>${r[2]||''}</td><td>${r[3]||''}</td><td>${r[4]||''} (${r[5]||''})</td><td>${r[6]||0}</td><td>${r[7]||0}</td><td>${r[8]||0}</td><td>${r[9]||0}</td><td>${r[10]||0}</td><td>${r[11]||0}</td><td>${custom}</td><td><b>K${r[14]||0}</b></td></tr>";}document.getElementById("orderTable").innerHTML=html;}
+function filterOrder(){let q=document.getElementById("searchOrder").value.toLowerCase();document.querySelectorAll(".orderRow").forEach(row=>{row.style.display=row.innerText.toLowerCase().includes(q)?"":"none";});}
+function exportTable(tableId,filename){let table=document.getElementById(tableId);let csv=[];for(let row of table.rows){let cols=[];for(let cell of row.cells){let txt=cell.innerText.replace(/"/g,'""');cols.push(`"${txt}"`);}csv.push(cols.join(","));}let csvFile=new Blob([csv.join("\n")],{type:"text/csv"});let link=document.createElement("a");link.href=URL.createObjectURL(csvFile);link.download=filename;link.click();}
+function logout(){sessionStorage.removeItem("isAdmin");window.location="adminlogin.html";}
+function createResellerFromForm(){const shop=document.getElementById("newShop").value.trim();const owner=document.getElementById("newOwner").value.trim();const phone=document.getElementById("newPhone").value.trim();const pass=document.getElementById("newPass").value.trim();const idType=document.getElementById("newIdType").value.trim();const idNo=document.getElementById("newIdNo").value.trim();const province=document.getElementById("newProvince").value.trim();const town=document.getElementById("newTown").value.trim();const location=document.getElementById("newLocation").value.trim();if(!phone||!pass||!shop){return alert("Shop Name, Phone & Password required!");}const cb="create_"+Date.now();window[cb]=function(res){let msg=`*TELIKOM RAITKAD - Welcome ${owner||shop}!*%0A%0AYour reseller account created!%0A%0A*Shop:* ${shop}%0A*Owner:* ${owner}%0A*Phone:* ${phone}%0A*Password:* ${pass}%0A%0A*Login here:*%0A${RESELLER_LOGIN_LINK}%0A%0ALogin with:%0A Shop Name: *${shop}*%0A Password: *${pass}*%0A%0AThank you for partnering with Telikom!`;let cleanPhone=phone.replace(/[^0-9]/g,'');window.open(`https://wa.me/${cleanPhone}?text=${msg}`,"_blank");alert("✅ "+shop+" saved + WhatsApp opened to "+phone);loadShops();document.querySelectorAll('#newShop,#newOwner,#newPhone,#newPass,#newIdType,#newIdNo,#newProvince,#newTown,#newLocation').forEach(i=>i.value='');};const s=document.createElement("script");s.src=`${SHEET_URL}?type=createReseller&shopName=${encodeURIComponent(shop)}&owner=${encodeURIComponent(owner)}&shopPhone=${encodeURIComponent(phone)}&password=${encodeURIComponent(pass)}&idType=${encodeURIComponent(idType)}&idNo=${encodeURIComponent(idNo)}&province=${encodeURIComponent(province)}&town=${encodeURIComponent(town)}&location=${encodeURIComponent(location)}&callback=${cb}`;document.body.appendChild(s);}
+loadShops();
+</script>
 </body>
 </html>
