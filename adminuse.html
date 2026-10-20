@@ -75,4 +75,36 @@ html+='<div class="shop-card"><b>'+r[0]+'</b> ('+r[1]+')<br>📞 '+r[2]+' | 📍
 function createShop(){
 var shopName=document.getElementById('shopName').value.trim();
 var owner=document.getElementById('owner').value.trim();
-var shop
+var shopPhone=document.getElementById('shopPhone').value.trim();
+var password=document.getElementById('password').value.trim();
+if(!shopName||!shopPhone||!password){alert('Fill Shop Name, Phone, Password!');return;}
+document.getElementById('createMsg').innerHTML='Creating...';
+var p='&shopName='+encodeURIComponent(shopName)+'&owner='+encodeURIComponent(owner)+'&shopPhone='+encodeURIComponent(shopPhone)+'&idType='+encodeURIComponent(document.getElementById('idType').value)+'&idNo='+encodeURIComponent(document.getElementById('idNo').value)+'&province='+encodeURIComponent(document.getElementById('province').value)+'&town='+encodeURIComponent(document.getElementById('town').value)+'&location='+encodeURIComponent(document.getElementById('location').value)+'&password='+encodeURIComponent(password);
+var s=document.createElement('script');
+s.src=SHEET_URL+'?type=createReseller&callback=afterCreate'+p+'&_='+Date.now();
+document.body.appendChild(s);
+window._newShop={shopName:shopName,password:password,phone:shopPhone};
+}
+function afterCreate(res){
+document.getElementById('createMsg').innerHTML='<p style="color:green">✅ Created! Opening WhatsApp...</p>';
+var msg='*TELIKOM RAITKAD - Your Shop Login*%0A%0AShop: '+encodeURIComponent(window._newShop.shopName)+'%0APassword: '+encodeURIComponent(window._newShop.password)+'%0A%0ALogin here: '+encodeURIComponent(RESELLER_LOGIN_LINK)+'%0A%0AThank you!';
+var wa='https://wa.me/'+window._newShop.phone.replace(/[^0-9]/g,'')+'?text='+msg;
+window.open(wa,'_blank');
+document.getElementById('shopName').value='';document.getElementById('shopPhone').value='';document.getElementById('password').value='';document.getElementById('owner').value='';
+}
+function deleteShop(row){
+if(!confirm('Delete this shop?'))return;
+var s=document.createElement('script'); s.src=SHEET_URL+'?type=deleteShop&rowIndex='+row+'&callback=viewShops&_='+Date.now(); document.body.appendChild(s);
+}
+function loadOrders(){
+document.getElementById('ordersData').innerHTML='Loading orders...';
+var s=document.createElement('script'); s.src=SHEET_URL+'?type=getOrders&callback=showOrders&_='+Date.now(); document.body.appendChild(s);
+}
+function showOrders(data){
+if(!data||data.length<=1){document.getElementById('ordersData').innerHTML='<p>No orders yet.</p>';return;}
+var html='';for(var i=data.length-1;i>=1;i--){var r=data[i]; html+='<div class="order-card"><b>'+(r[1]||'')+'</b> - '+(r[2]||'')+'<br><small>'+(r[0]||'')+' | '+(r[5]||'')+'</small></div>';}
+document.getElementById('ordersData').innerHTML=html;
+}
+function exportExcel(){viewShops(); setTimeout(()=>{alert('Export: Use Google Sheet File > Download')},500);}
+if(!localStorage.getItem('admin')){location.href='adminlogin.html';}
+</script></body></html>
