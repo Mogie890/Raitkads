@@ -1,80 +1,92 @@
 <!DOCTYPE html>
 <html>
-<head><title>Telikom Raitkad - Dashboard</title><meta name="viewport" content="width=device-width, initial-scale=1">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reseller Dashboard</title>
 <style>
-body{background:#0f172a; color:white; font-family:Arial; padding:20px; margin:0;}
-.card{background:#1e293b; padding:20px; border-radius:12px; margin-bottom:15px;}
-.btn{background:#22c55e; color:black; padding:10px 20px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-right:8px;}
-.btn2{background:#334155; color:white; padding:10px 20px; border:none; border-radius:8px; cursor:pointer;}
+body{background:#0f172a;color:#fff;font-family:sans-serif;padding:10px;margin:0}
+.card{background:#1e293b;padding:12px;border-radius:12px;margin-bottom:12px;overflow:auto}
+.btn{background:#22c55e;color:#000;padding:10px 15px;border:none;border-radius:8px;font-weight:bold;margin-right:6px}
+.btn2{background:#334155;color:#fff;padding:8px 12px;border:none;border-radius:8px}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:600px}
+th,td{padding:8px 6px;border-bottom:1px solid #334155;text-align:center;white-space:nowrap}
+th{background:#0f172a;color:#fbbf24;position:sticky;top:0}
+.total{color:#22c55e;font-weight:bold}
 </style>
 </head>
 <body>
-<h2>📱 Telikom Raitkad</h2>
-<div class="card" id="shopInfo">Loading...</div>
+
+<div class="card" id="loginInfo">Loading...</div>
+
 <div class="card">
-<h3>Welcome to Reseller Dashboard</h3>
-<p>Track your orders here.</p>
-<div id="myHistoryBox" style="margin-top:20px; background:rgba(255,255,255,0.05); padding:15px; border-radius:12px;">
-  <h3 style="color:white;">📦 My Past Orders</h3>
-  <p id="historyLoading" style="color:#aaa;">Loading your history...</p>
-  <table id="myHistoryTable" border="1" style="width:100%; border-collapse:collapse; display:none; background:white; color:black; border-radius:8px; overflow:hidden;">
-    <thead><tr style="background:#f0f0f0"><th>Date</th><th>Details</th><th>Total</th></tr></thead>
-    <tbody id="historyBody"></tbody>
-  </table>
-</div>
-<button class="btn" onclick="location.href='orders.html'" style="margin-top:15px;">➕ New Order</button>
+<h3 style="margin:0 0 10px">📦 My Past Orders - RaitKad</h3>
+<div id="orders">Loading...</div>
+<div style="margin-top:12px">
+<button class="btn" onclick="location.href='reseller.html'">+ New Order</button>
 <button class="btn2" onclick="logout()">Logout</button>
+</div>
 </div>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
 
-// FIX: Support all storage keys
-const shop = localStorage.getItem("currentShop") || localStorage.getItem("resellerShop") || localStorage.getItem("shopName") || "";
-const shopPhone = localStorage.getItem("shopPhone") || localStorage.getItem("resellerPhone") || "";
+function getPhone(){return localStorage.getItem('shopPhone')||localStorage.getItem('phone')||new URLSearchParams(location.search).get('phone')||""}
+function getShop(){return localStorage.getItem('shopName')||localStorage.getItem('shop')||"M2N TRADING"}
 
-if(!shop){
-  window.location.href="reseller.html";
-} else {
-  document.getElementById("shopInfo").innerHTML = "✅ Logged in as: <b>"+shop+"</b><br>📞 "+shopPhone+"<br>📍 Port Moresby";
+let myPhone=getPhone(), myShop=getShop();
+document.getElementById('loginInfo').innerHTML = `✅ Logged in as: <b>${myShop}</b> | 📱 ${myPhone} | 📍 Port Moresby`;
+
+loadOrders();
+function loadOrders(){
+ let cb="cb"+Date.now();
+ window[cb]=function(d){delete window[cb];document.body.removeChild(s);showOrders(d);};
+ let s=document.createElement('script');s.src=SCRIPT_URL+"?type=getOrders&callback="+cb+"&t="+Date.now();document.body.appendChild(s);
 }
 
-function logout(){
-  localStorage.clear();
-  window.location.href="reseller.html";
+function parseK(text){
+ let out={k3:0,k5:0,k10:0,k20:0,k30:0,k50:0,total:0};
+ if(!text) return out;
+ text=text.toString();
+ let regex=/K(\d+):(\d+)/gi, m;
+ while((m=regex.exec(text))!==null){
+   let val=parseInt(m[1]), qty=parseInt(m[2]);
+   if(val==3) out.k3=qty;
+   if(val==5) out.k5=qty;
+   if(val==10) out.k10=qty;
+   if(val==20) out.k20=qty;
+   if(val==30) out.k30=qty;
+   if(val==50) out.k50=qty;
+   out.total+=val*qty;
+ }
+ return out;
 }
 
-function loadMyHistory(){
-  if(!shopPhone){ document.getElementById("historyLoading").innerText="No phone found - login again"; return; }
-  const cbH="hist_"+Date.now();
-  window[cbH]=function(data){
-    const loading=document.getElementById("historyLoading");
-    if(loading) loading.style.display="none";
-    const table=document.getElementById("myHistoryTable");
-    const tbody=document.getElementById("historyBody");
-    if(!data || data.length<=1){ 
-      if(loading){ loading.style.display="block"; loading.innerText="No past orders yet."; }
-      return; 
-    }
-    let html="";
-    for(let i=data.length-1;i>=1;i--){
-      const d=new Date(data[i][0]).toLocaleDateString();
-      // NEW columns: 6=K3,7=K5,8=K10,9=K20,10=K50,11=K100,12=CustomVal,13=CustomQty,14=Total
-      const k3=data[i][6]||0, k5=data[i][7]||0, k10=data[i][8]||0, k20=data[i][9]||0, k50=data[i][10]||0, k100=data[i][11]||0;
-      const cVal=data[i][12]||0, cQty=data[i][13]||0;
-      let detail = `K3:${k3} K5:${k5} K10:${k10} K20:${k20} K50:${k50} K100:${k100}`;
-      if(cQty>0) detail += ` K${cVal}x${cQty}`;
-      html+=`<tr><td>${d}</td><td>${detail}</td><td><b>K${data[i][14]}</b></td></tr>`;
-    }
-    tbody.innerHTML=html;
-    table.style.display="table";
-    delete window[cbH];
-  };
-  const s=document.createElement("script");
-  s.src=`${SHEET_URL}?type=getMyOrders&shopPhone=${encodeURIComponent(shopPhone)}&callback=${cbH}`;
-  document.body.appendChild(s);
+function showOrders(data){
+ if(!data||data.length<=1){document.getElementById('orders').innerHTML="No orders yet";return;}
+ let html=`<table><tr><th>Date</th><th>Shop</th><th>K3</th><th>K5</th><th>K10</th><th>K20</th><th>K30</th><th>K50</th><th>Total (K)</th><th>Status</th></tr>`;
+ let cleanMyPhone=myPhone.replace(/\D/g,'').slice(-8);
+ for(let i=1;i<data.length;i++){
+  let r=data[i]; if(!r||!r[0]) continue;
+  // r = Date, Shop, CustomerPhone/Product, Product/Amount, Amount/Status, Status...
+  // Your sheet: A Date, B Shop, C Customer/location, D Product (K3:100...), E Amount, F Status
+  let date=(r[0]||'').toString().slice(0,16);
+  let shop=r[1]||'';
+  let prodText=r[3]||r[2]||''; // K3:100 K5:100...
+  let amount=r[4]||0;
+  let status=r[5]||'NEW';
+  
+  // Filter for this shop if needed
+  // if(!shop.toLowerCase().includes(myShop.toLowerCase()) && (r.join('').indexOf(cleanMyPhone)==-1)) continue;
+
+  let p=parseK(prodText);
+  let totalShow = amount||p.total;
+  
+  html+=`<tr><td>${date}</td><td>${shop}</td><td>${p.k3||'-'}</td><td>${p.k5||'-'}</td><td>${p.k10||'-'}</td><td>${p.k20||'-'}</td><td>${p.k30||'-'}</td><td>${p.k50||'-'}</td><td class="total">K${totalShow}</td><td>${status}</td></tr>`;
+ }
+ html+=`</table>`;
+ document.getElementById('orders').innerHTML=html;
 }
-window.addEventListener("load", ()=>{ setTimeout(loadMyHistory, 1000); });
+function logout(){localStorage.clear();location.href='reseller.html';}
 </script>
 </body>
 </html>
