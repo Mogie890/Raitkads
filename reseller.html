@@ -1,26 +1,92 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Reseller Login</title>
-
-<style>body{font-family:Arial;padding:20px;max-width:400px;margin:50px auto;background:#f9f9f9}input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:5px;box-sizing:border-box}button{width:100%;padding:12px;background:#007bff;color:white;border:none;border-radius:5px;cursor:pointer;font-size:16px}button:disabled{background:#aaa}</style>
-
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reseller Login - RaitKad</title>
+<style>
+body{background:#0f172a;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:90vh;margin:0;padding:15px}
+.card{background:#1e293b;padding:25px;border-radius:15px;width:100%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
+h2{text-align:center;margin:0 0 20px;color:#fbbf24}
+input{width:100%;padding:13px;margin:8px 0;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;box-sizing:border-box;font-size:15px}
+.btn{width:100%;background:#2563eb;color:#fff;padding:13px;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}
+.btn:active{transform:scale(0.98)}
+.link{text-align:center;margin-top:12px}
+.link a{color:#93c5fd;font-size:13px;text-decoration:none}
+#msg{text-align:center;margin-top:12px;font-size:14px;min-height:20px}
+</style>
 </head>
-
 <body>
+<div class="card">
+<h2>Reseller Login</h2>
+<input id="shopInput" type="text" placeholder="Shop Name or Phone (Ira Tauna)">
+<input id="passInput" type="password" placeholder="Password">
+<button class="btn" id="loginBtn">LOGIN</button>
+<div id="msg"></div>
+<div class="link"><a href="admin.html">Admin Page</a></div>
+</div>
 
-<h2 style="text-align:center">Reseller Login</h2>
+<script>
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzF2sCq-EhdIX-deQXzHN_pHkINy6xEsckGhU54YM106lbS-fFb0xAB11stHa9sZAFv_A/exec";
 
-<input id="loginShop" placeholder="Shop Name">
-<input id="loginPass" type="password" placeholder="Password">
-<button id="loginBtn" onclick="login()">LOGIN</button>
+if(location.search.includes('logout')){ localStorage.clear(); }
 
-<br><br><a href="adminuse.html">Admin Page</a>
+function getShops(){
+  return new Promise((resolve)=>{
+    let cb="shops_"+Date.now();
+    window[cb]=function(data){
+      try{ delete window[cb]; }catch(e){}
+      let sEl=document.getElementById('jsonp');
+      if(sEl) sEl.remove();
+      resolve(data);
+    };
+    let s=document.createElement('script');
+    s.id='jsonp';
+    s.src=SCRIPT_URL+"?type=getShops&callback="+cb+"&t="+Date.now();
+    s.onerror=function(){ resolve(null); };
+    document.body.appendChild(s);
+  });
+}
 
-<script src="script2.js"></script>
+async function doLogin(){
+  let shopEl=document.getElementById('shopInput');
+  let passEl=document.getElementById('passInput');
+  let msgEl=document.getElementById('msg');
+  let userVal=shopEl.value.trim();
+  let passVal=passEl.value.trim();
+  if(!userVal||!passVal){ msgEl.innerText="❌ Enter shop name & password"; return; }
+  msgEl.innerText="⏳ Checking...";
+  let data=await getShops();
+  if(!data){ msgEl.innerText="❌ Cannot load sheet. Check internet."; return; }
+  let found=null;
+  for(let i=1;i<data.length;i++){
+    let r=data[i]; if(!r) continue;
+    let sName=(r[0]||'').toString().trim();
+    let sPhone=(r[1]||'').toString().trim();
+    let sPass=(r[2]||'').toString().trim();
+    if(!sName) continue;
+    let matchName=sName.toLowerCase()===userVal.toLowerCase() || sName.toLowerCase().includes(userVal.toLowerCase()) || userVal.toLowerCase().includes(sName.toLowerCase());
+    let matchPhone=sPhone===userVal || sPhone.includes(userVal) || userVal.includes(sPhone);
+    if((matchName||matchPhone) && sPass===passVal){
+      found={shopName:sName, phone:sPhone, pass:sPass};
+      break;
+    }
+  }
+  if(found){
+    localStorage.clear();
+    localStorage.setItem('shopName',found.shopName);
+    localStorage.setItem('shopPhone',found.phone);
+    localStorage.setItem('phone',found.phone);
+    msgEl.innerText="✅ Welcome "+found.shopName+"!";
+    setTimeout(function(){
+      location.href="dashboard.html?phone="+encodeURIComponent(found.phone)+"&shop="+encodeURIComponent(found.shopName)+"&t="+Date.now();
+    },600);
+  }else{
+    msgEl.innerText="❌ Wrong shop name/phone or password!";
+  }
+}
 
+document.getElementById('loginBtn').onclick=function(e){ e.preventDefault(); doLogin(); };
+document.getElementById('passInput').addEventListener('keypress', function(e){ if(e.key==='Enter'){ doLogin(); } });
+</script>
 </body>
 </html>
