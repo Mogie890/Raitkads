@@ -87,15 +87,34 @@ function calc(){
                                     if(totalK==0){ alert("Add at least one Raitkad!"); return; }
                                       if(!loc || !rep){ alert("Fill location and Sales Rep"); return; }
 
-                                        // Save to Google Sheet
-                                          const cb="cb_"+Date.now();
-                                            window[cb]=function(r){
-                                                delete window[cb]; script.remove();
-                                                  };
-                                                    const script=document.createElement("script");
-                                                      script.src=`${SHEET_URL}?type=order&shop=${encodeURIComponent(shopName)}&custPhone=${encodeURIComponent(loc)}&product=${encodeURIComponent(`K3:${k3} K5:${k5} K10:${k10} K20:${k20} K50:${k50} K100:${k100}`)}&amount=${totalK}&callback=${cb}`;
-                                                        document.body.appendChild(script);
-
+                                                    
+    // Save to Google Sheet - Order History Tab
+    const cb="cb_"+Date.now();
+    window[cb]=function(r){
+      console.log("Saved:", r);
+      delete window[cb]; script.remove();
+      if(r.status === "success") {
+        alert("Order Saved! Check Order History tab!");
+      }
+    };
+    
+    const k3=document.getElementById("k3").value||0;
+    const k5=document.getElementById("k5").value||0;
+    const k10=document.getElementById("k10").value||0;
+    const k20=document.getElementById("k20").value||0;
+    const k50=document.getElementById("k50").value||0;
+    const k100=document.getElementById("k100").value||0;
+    const shopName=document.getElementById("shopName").value;
+    const loc=document.getElementById("location").value;
+    const rep=document.getElementById("salesRep").value;
+    
+    const total = (k3*3)+(k5*5)+(k10*10)+(k20*20)+(k50*50)+(k100*100);
+    
+    const params = `action=saveOrder&shopName=${encodeURIComponent(shopName)}&location=${encodeURIComponent(loc)}&salesRep=${encodeURIComponent(rep)}&k3=${k3}&k5=${k5}&k10=${k10}&k20=${k20}&k50=${k50}&k100=${k100}&amount=${total}&callback=${cb}`;
+    
+    const script=document.createElement("script");
+    script.src=`${SCRIPT_URL}?${params}`;
+    document.body.appendChild(script);
                                       
                                                 
 
