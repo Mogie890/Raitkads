@@ -1,81 +1,94 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Reseller Login - RaitKad</title>
 <style>
-body{background:#0f172a;color:#fff;font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:90vh;margin:0;padding:15px}
-.card{background:#1e293b;padding:25px;border-radius:15px;width:100%;max-width:380px;box-shadow:0 10px 30px rgba(0,0,0,0.5)}
-h2{text-align:center;margin:0 0 20px;color:#fbbf24}
-input{width:100%;padding:13px;margin:8px 0;border-radius:10px;border:1px solid #334155;background:#0f172a;color:#fff;box-sizing:border-box;font-size:15px}
-.btn{width:100%;background:#2563eb;color:#fff;padding:13px;border:none;border-radius:10px;font-weight:bold;font-size:16px;cursor:pointer;margin-top:10px}
-#msg{text-align:center;margin-top:12px;font-size:14px;min-height:20px}
-.small{font-size:11px;color:#94a3b8;text-align:center;margin-top:10px;line-height:1.4}
+body{background:#1a1d29;color:#fff;font-family:Arial;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+.card{background:#2a2d3e;padding:30px;border-radius:12px;width:90%;max-width:400px;text-align:center}
+h2{color:#f0c040}
+input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;background:#1a1d29;color:#fff;box-sizing:border-box}
+button{width:100%;padding:12px;background:#4a6cf7;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:10px}
+button:disabled{opacity:0.5}
+.msg{margin-top:12px;font-size:14px}
 </style>
 </head>
 <body>
 <div class="card">
 <h2>Reseller Login</h2>
-<input id="shopInput" type="text" placeholder="Shop Name or Phone">
-<input id="passInput" type="password" placeholder="Password (e.g. 1713)">
-<button class="btn" id="loginBtn">LOGIN</button>
-<div id="msg"></div>
-<div class="small">Ira Tauna: 67576001713 / 1713<br>M2N Morgan: 67576001714 / 1234<br>M2N Shong Lee: 67576800123 / 908070</div>
+<input id="shop" placeholder="Shop Name">
+<input id="phone" type="hidden">
+<input id="pwd" type="password" placeholder="Password">
+<button id="btn" onclick="login()">LOGIN</button>
+<div id="msg" class="msg"></div>
+<div style="margin-top:15px;font-size:11px;opacity:0.6">
+Ira Tauna: 67576001713 / 1713<br>
+M2N Morgan: 67576001714 / 1234<br>
+M2N Shong Lee: 67576800123 / 908070
 </div>
+</div>
+
 <script>
- const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwd1PhgIf1gG04qhYl1pmmBHf3rmO5UrjQ047rMYML2YaNiZlbCQspCW5tSMLBDWCzTow/exec"
-   ;
-if(location.search.includes('logout')) localStorage.clear();
-function getShops(){
-  return new Promise((resolve)=>{
-    let cb="shops_"+Date.now();
-    window[cb]=function(data){ try{delete window[cb]}catch(e){} let el=document.getElementById('jsonp'); if(el) el.remove(); resolve(data); };
-    let s=document.createElement('script'); s.id='jsonp';
-    s.src=SCRIPT_URL+"?type=getShops&callback="+cb+"&t="+Date.now();
-    s.onerror=()=>resolve(null);
-    document.body.appendChild(s);
-  });
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwd1PhgIf1gG04qhYl1pmmBHf3rmO5UrjQ047rMYML2YaNiZlbCQspCW5tSMLBDWCzTow/exec";
+let shops=[];
+
+function jsonp(url){
+ return new Promise((resolve,reject)=>{
+   const cb="cb"+Date.now();
+   window[cb]=d=>{resolve(d);delete window[cb];s.remove();};
+   const s=document.createElement("script");
+   s.src=url+(url.includes("?")?"&":"?")+"callback="+cb;
+   s.onerror=()=>{reject("load fail");delete window[cb];s.remove();};
+   setTimeout(()=>reject("timeout"),15000);
+   document.body.appendChild(s);
+ });
 }
-async function doLogin(){
-  let userVal=document.getElementById('shopInput').value.trim();
-  let passVal=document.getElementById('passInput').value.trim();
-  let msg=document.getElementById('msg');
-  if(!userVal||!passVal){ msg.innerText="❌ Enter shop & password"; return; }
-  msg.innerText="⏳ Checking...";
-  let data=await getShops();
-  if(!data){ msg.innerText="❌ Sheet load failed"; return; }
-  // Columns: A=0 ShopName, B=1 Owner, C=2 Phone, I=8 Pass
+
+async function loadShops(){
+  try{
+    document.getElementById("msg").textContent="Loading shops...";
+    const data=await jsonp(SCRIPT_URL+"?type=getShops");
+    shops=data;
+    document.getElementById("msg").textContent="Ready - "+(data.length-1)+" shops";
+    console.log("Shops loaded",data);
+  }catch(e){
+    document.getElementById("msg").textContent="❌ Sheet load failed: "+e+" - check SCRIPT_URL";
+    console.error(e);
+  }
+}
+
+function login(){
+  const shopName=document.getElementById("shop").value.trim();
+  const pwd=document.getElementById("pwd").value.trim();
+  const msg=document.getElementById("msg");
+  
+  if(!shops.length){msg.textContent="Shops not loaded yet";return;}
+  
+  // Find shop: column 0=Shop Name, 1=Phone, 2=Password (adjust if different)
   let found=null;
-  for(let i=1;i<data.length;i++){
-    let r=data[i]; if(!r) continue;
-    let sName=(r[0]||'').toString().trim();
-    let sOwner=(r[1]||'').toString().trim();
-    let sPhone=(r[2]||'').toString().trim();
-    let sPass=(r[8]||'').toString().trim(); // I = Pass - CORRECT!
-    if(!sPhone && !sName) continue;
-    let cleanU=userVal.replace(/\D/g,'').slice(-8);
-    let cleanP=sPhone.replace(/\D/g,'').slice(-8);
-    let matchName=sName.toLowerCase()===userVal.toLowerCase();
-    let matchPhone=sPhone===userVal || cleanP===cleanU || sPhone.includes(userVal);
-    if((matchName||matchPhone) && sPass===passVal){
-      found={shopName:sName, owner:sOwner, phone:sPhone};
+  for(let i=1;i<shops.length;i++){
+    let row=shops[i];
+    let sName=(row[0]||"").toString().trim();
+    let sPhone=(row[1]||"").toString().trim();
+    let sPass=(row[2]||"").toString().trim();
+    if(sName.toLowerCase()===shopName.toLowerCase() && sPass===pwd){
+      found={name:sName,phone:sPhone};
       break;
     }
   }
+  
   if(found){
-    localStorage.clear();
-    localStorage.setItem('shopName',found.shopName);
-    localStorage.setItem('shopOwner',found.owner);
-    localStorage.setItem('shopPhone',found.phone);
-    localStorage.setItem('phone',found.phone);
-    msg.innerText="✅ Welcome "+found.shopName+"!";
-    setTimeout(()=>{ location.href="dashboard.html?phone="+encodeURIComponent(found.phone)+"&shop="+encodeURIComponent(found.shopName)+"&t="+Date.now(); },600);
-  }else{
-    msg.innerText="❌ Wrong shop/phone or password";
+    msg.textContent="✅ Login success! Redirecting...";
+    let phone=found.phone;
+    let t=Date.now();
+    location.href=`dashboard.html?phone=${encodeURIComponent(phone)}&shop=${encodeURIComponent(found.name)}&t=${t}`;
+  } else {
+    msg.textContent="❌ Wrong shop/phone or password";
   }
 }
-document.getElementById('loginBtn').onclick=(e)=>{ e.preventDefault(); doLogin(); };
-document.getElementById('passInput').addEventListener('keypress',e=>{ if(e.key==='Enter') doLogin(); });
+
+loadShops();
 </script>
 </body>
 </html>
