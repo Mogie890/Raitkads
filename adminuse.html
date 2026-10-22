@@ -23,10 +23,6 @@ button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bol
 <input id="shopName" placeholder="Shop Name *">
 <input id="owner" placeholder="Owner Name *">
 <input id="shopPhone" placeholder="Shop Phone * (e.g. 67570000000)">
-// <select id="idType"><option>NID</option><option>Passport</option><option>Driver License</option></select>
-// <input id="idNo" placeholder="ID Number">
-// <input id="province" placeholder="Province">
-// <input id="town" placeholder="Town">
 <input id="location" placeholder="Location / Address">
 <input id="password" placeholder="Create Password *">
 <button class="green" onclick="createShop()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button>
@@ -76,6 +72,7 @@ function createShop(){
 var shopName=document.getElementById('shopName').value.trim();
 var owner=document.getElementById('owner').value.trim();
 var shopPhone=document.getElementById('shopPhone').value.trim();
+var shopPhone=document.getElementById('location').value.trim();
 var password=document.getElementById('password').value.trim();
 if(!shopName||!shopPhone||!password){alert('Fill Shop Name, Phone, Password!');return;}
 document.getElementById('createMsg').innerHTML='Creating...';
