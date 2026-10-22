@@ -58,34 +58,39 @@ async function loadShops(){
   }
 }
 
-function login(){
-  const shopName=document.getElementById("shop").value.trim();
-  const pwd=document.getElementById("pwd").value.trim();
-  const msg=document.getElementById("msg");
+async function loginReseller() {
+  const shopInput = document.getElementById("shopName").value.trim();
+  const passInput = document.getElementById("password").value.trim();
+  if(!shopInput || !passInput) { alert("Enter shop & password"); return; }
   
-  if(!shops.length){msg.textContent="Shops not loaded yet";return;}
+  const url = `${SCRIPT_URL}?action=login&shop=${encodeURIComponent(shopInput)}&password=${encodeURIComponent(passInput)}&callback=cb`;
   
-  // Find shop: column 0=Shop Name, 1=Phone, 2=Password (adjust if different)
-  let found=null;
-  for(let i=1;i<shops.length;i++){
-    let row=shops[i];
-    let sName=(row[0]||"").toString().trim();
-    let sPhone=(row[1]||"").toString().trim();
-    let sPass=(row[2]||"").toString().trim();
-    if(sName.toLowerCase()===shopName.toLowerCase() && sPass===pwd){
-      found={name:sName,phone:sPhone};
-      break;
+  // JSONP login
+  window.cb = function(res) {
+    if(res.status === "success") {
+      localStorage.setItem("currentShop", JSON.stringify(res.shop));
+      alert(;
+      window.location.href = "dashboard.html"; // or show dashboard
+    } else {
+      alert(res.message);
     }
-  }
+  };
   
-  if(found){
-    msg.textContent="✅ Login success! Redirecting...";
-    let phone=found.phone;
-    let t=Date.now();
-    location.href=`dashboard.html?phone=${encodeURIComponent(phone)}&shop=${encodeURIComponent(found.name)}&t=${t}`;
-  } else {
-    msg.textContent="❌ Wrong shop/phone or password";
-  }
+  const s = document.createElement("script");
+  s.src = url;
+  document.body.appendChild(s);
+}
+
+// Load shops for dropdown
+function loadShops() {
+  const url = `${SCRIPT_URL}?action=getShops&callback=shopsCb`;
+  window.shopsCb = function(shops) {
+    console.log("Shops loaded:", shops);
+    // fill dropdown if you have one
+  };
+  const s = document.createElement("script");
+  s.src = url;
+  document.body.appendChild(s);
 }
 
 loadShops();
