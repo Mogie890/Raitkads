@@ -1,23 +1,14 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Login</title>
-<style>body{font-family:Arial;background:#0d47a1;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}
-.box{background:white;padding:25px;border-radius:10px;width:90%;max-width:320px;text-align:center}
-input{width:100%;padding:12px;margin:8px 0;border:1px solid #ccc;border-radius:6px;box-sizing:border-box}
-button{width:100%;padding:12px;background:#0d47a1;color:white;border:none;border-radius:6px;font-weight:bold;cursor:pointer;margin-top:10px}
-</style></head><body>
-<div class="box"><h2>Telikom Admin</h2>
-<input id="user" placeholder="Username" value="admin">
-<input id="pass" type="password" placeholder="Password" value="Telikom2025">
-<button onclick="login()">LOGIN</button>
-<p style="font-size:12px;color:#666;margin-top:10px">Enter Username and Password</p>
-</div>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Login</title>
+<style>body{font-family:Arial;background:#0f172a;color:white;display:flex;justify-content:center;align-items:center;height:100vh;margin:0}.card{background:#1e293b;padding:30px;border-radius:12px;width:90%;max-width:350px}input{width:100%;padding:12px;margin:8px 0;border-radius:8px;border:none;box-sizing:border-box}button{width:100%;padding:12px;background:#22c55e;color:white;border:none;border-radius:8px;font-weight:bold;cursor:pointer}</style>
+</head><body>
+<div class="card"><h2>Admin Login</h2><input id="user" placeholder="Username (admin)"><input id="pass" type="password" placeholder="Password (admin123)"><button onclick="login()">Login</button><p id="msg"></p></div>
 <script>
 function login(){
-var u=document.getElementById('user').value;
-var p=document.getElementById('pass').value;
-if(u==='admin' && p==='Telikom2025'){
-localStorage.setItem('admin','yes');
-location.href='adminuse.html';
-}else{alert('Wrong! Use admin / Telikom2025');}
+  const u=document.getElementById('user').value;
+  const p=document.getElementById('pass').value;
+  if(u==='admin' && p==='admin123'){localStorage.setItem('isAdmin','true');location.href='adminuse.html';}
+  else document.getElementById('msg').innerText='Invalid - Use admin / admin123';
 }
 </script></body></html>
