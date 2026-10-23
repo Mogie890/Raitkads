@@ -1,133 +1,77 @@
 <!DOCTYPE html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Dashboard</title>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin - Resellers</title>
 <style>
-body{font-family:Arial;margin:0;background:#f5f5f5} .header{background:#0d47a1;color:white;padding:15px;display:flex;justify-content:space-between;align-items:center}
-.tabs{padding:15px;display:flex;gap:8px;flex-wrap:wrap} .tab{padding:10px 15px;border-radius:20px;border:none;cursor:pointer;font-weight:bold;font-size:13px} .active{background:#0d47a1;color:white} .inactive{background:#ddd}
-.container{margin:15px;background:white;padding:15px;border-radius:8px} input,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:5px;box-sizing:border-box}
-button{padding:10px;border:none;border-radius:5px;cursor:pointer;font-weight:bold} .green{background:#2e7d32;color:white;width:100%;padding:12px;margin-top:10px} .blue{background:#0d47a1;color:white} .orange{background:#ef6c00;color:white}
-#custTab{display:none} #orderTab{display:none}
-.shop-card{border:1px solid #ddd;padding:10px;margin:8px 0;border-radius:6px}
-.order-card{border-left:4px solid #0d47a1;padding:8px;margin:8px 0;background:#fafafa}
-</style></head><body>
-<div class="header"><b>Admin Dashboard</b><button onclick="localStorage.clear();location.href='adminlogin.html'" style="background:#c62828;color:white">Logout</button></div>
-
-<div class="tabs">
-<button id="btnCreate" class="tab active" onclick="showTab('create')">➕ Create Customer</button>
-<button id="btnCust" class="tab inactive" onclick="showTab('cust')">👥 Customer List</button>
-<button id="btnOrder" class="tab inactive" onclick="showTab('order')">📦 Order History</button>
+body{font-family:Arial;background:#f1f5f9;margin:0}header{background:#0f172a;color:white;padding:15px;display:flex;justify-content:space-between} .container{padding:20px;max-width:1100px;margin:auto} .card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:20px}
+input{padding:10px;margin:6px 0;border-radius:8px;border:1px solid #cbd5e1;width:100%;box-sizing:border-box}button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:bold} .btn-green{background:#22c55e;color:white} .btn-blue{background:#3b82f6;color:white} .btn-dark{background:#0f172a;color:white}
+table{width:100%;border-collapse:collapse;margin-top:10px}th,td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:14px}th{background:#f8fafc}
+</style>
+</head><body>
+<header><span>RAIT Admin - Reseller Management</span><button onclick="logout()" style="background:#ef4444;color:white">Logout</button></header>
+<div class="container">
+  <div class="card"><h3>A. Register New Reseller</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <input id="shopName" placeholder="Shop Name *"><input id="owner" placeholder="Owner Name *">
+      <input id="phone" placeholder="Phone / WhatsApp *"><input id="location" placeholder="Location *">
+      <input id="password" placeholder="Password *" type="text">
+    </div>
+    <button class="btn-green" onclick="createShop()" style="margin-top:12px;width:100%">Register & Send WhatsApp</button><p id="createMsg"></p>
+  </div>
+  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap"><h3>B. Customer List View</h3>
+    <div><input id="search" placeholder="Search shop, owner, phone..." onkeyup="filterTable()" style="width:200px"><button class="btn-blue" onclick="exportExcel()" style="margin-left:8px">Extract Excel (CSV)</button><button class="btn-dark" onclick="loadShops()">Refresh</button></div></div>
+    <div style="overflow:auto"><table id="shopTable"><thead><tr><th>ShopName</th><th>Owner</th><th>Phone</th><th>Location</th><th>Password</th><th>Date Registered</th></tr></thead><tbody></tbody></table></div><p id="count"></p>
+  </div>
 </div>
-
-<!-- TAB 1 -->
-<div id="createTab" class="container">
-<h3>Create New Reseller</h3>
-<input id="shopName" placeholder="Shop Name *">
-<input id="owner" placeholder="Owner Name *">
-<input id="shopPhone" placeholder="Shop Phone * (e.g. 67570000000)">
-<input id="location" placeholder="Location / Address">
-<input id="password" placeholder="Create Password *">
-<button class="green" onclick="createShop()">📲 CREATE & SEND WHATSAPP CREDENTIALS</button>
-<div id="createMsg" style="margin-top:10px"></div>
-</div>
-
-<!-- TAB 2 -->
-<div id="custTab" class="container">
-<div style="display:flex;gap:5px"><input id="search" placeholder="Search shop, owner, phone, town..."><button class="blue" onclick="viewShops()">🔄 VIEW</button><button class="orange" onclick="exportExcel()">📥 Export</button></div>
-<button class="green" onclick="viewShops()">VIEW ALL SHOPS</button>
-<div id="shopsList" style="margin-top:15px"></div>
-</div>
-
-<!-- TAB 3 -->
-<div id="orderTab" class="container">
-<h3>Recent Orders</h3><button class="blue" onclick="loadOrders()">🔄 View Orders</button>
-<div id="ordersData" style="margin-top:15px">No orders loaded</div>
-</div>
-
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTaiPH47zsnGbkSEHlPet72XrfZIvjmTdGirhS4tWLcj-tNhpSz5otG5k6_61UDZ-W_A/exec";
-const RESELLER_LOGIN_LINK="https://mogie890.github.io/Raitkads/reseller.html";
-
-function showTab(t){
-document.getElementById('createTab').style.display=t==='create'?'block':'none';
-document.getElementById('custTab').style.display=t==='cust'?'block':'none';
-document.getElementById('orderTab').style.display=t==='order'?'block':'none';
-document.getElementById('btnCreate').className=t==='create'?'tab active':'tab inactive';
-document.getElementById('btnCust').className=t==='cust'?'tab active':'tab inactive';
-document.getElementById('btnOrder').className=t==='order'?'tab active':'tab inactive';
-if(t==='cust')viewShops();
-if(t==='order')loadOrders();
-}
-function viewShops(){
-document.getElementById('shopsList').innerHTML='Loading...';
-var s=document.createElement('script');
-s.src=SHEET_URL+'?callback=displayShops&_='+Date.now();
-document.body.appendChild(s);
-}
-function displayShops(data){
-var html=''; if(!data||data.length<=1){html='<p>No shops found. Create one in Create Customer tab!</p>';}
-else{for(var i=1;i<data.length;i++){var r=data[i]; if(!r[0])continue;
-html+='<div class="shop-card"><b>'+r[0]+'</b> ('+r[1]+')<br>📞 '+r[2]+' | 📍 '+(r[6]||'')+' '+(r[5]||'')+'<br>Pass: '+(r[8]||'')+' <button onclick="deleteShop('+(i+1)+')" style="float:right;background:red;color:white;padding:5px 10px">Delete</button></div>';
-}} document.getElementById('shopsList').innerHTML=html;
-}
+if(!localStorage.getItem('isAdmin')) location.href='adminlogin.html';
+let allShops=[];
 async function createShop(){
-  const shopName = document.getElementById("shopName").value.trim();
-  const owner = document.getElementById("owner").value.trim();
-  const phone = document.getElementById("shopPhone").value.trim();
-  const location = document.getElementById("location").value.trim();
-  const password = document.getElementById("password").value.trim();
-  const msgDiv = document.getElementById("createMsg");
-  
-  if(!shopName || !owner || !phone || !password){ alert("Fill required fields"); return; }
-  
-  msgDiv.innerText = "Creating...";
-  
-  const payload = { action:"createShop", shopName, owner, phone, location, password };
-  
+  const shopName=document.getElementById('shopName').value.trim();
+  const owner=document.getElementById('owner').value.trim();
+  const phone=document.getElementById('phone').value.trim();
+  const location=document.getElementById('location').value.trim();
+  const password=document.getElementById('password').value.trim();
+  const msg=document.getElementById('createMsg');
+  if(!shopName||!owner||!phone||!location||!password){alert('Fill all');return;}
+  msg.innerText='Creating...';
+  const payload={action:'createShop',shopName,owner,phone,location,password};
   try{
-    // Use no-cors mode to avoid hanging - fire and forget
-    await fetch(SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {"Content-Type":"application/json"},
-      body: JSON.stringify(payload)
-    });
-    
-    // If we reach here, Google got it
-    msgDiv.innerHTML = "<span style='color:green'>✅ Created! Check Sheet. Opening WhatsApp...</span>";
-    
-    // Open WhatsApp with credentials
-    const waText = `Welcome ${shopName}!%0AOwner: ${owner}%0ALogin Phone: ${phone}%0APassword: ${password}%0ALocation: ${location}%0A%0ALogin at: https://mogie890.github.io/Raitkads/dashboard.html`;
-    window.open(`https://wa.me/${phone}?text=${waText}`, "_blank");
-    
-    // Clear form
-    document.getElementById("shopName").value = "";
-    document.getElementById("owner").value = "";
-    document.getElementById("shopPhone").value = "";
-    document.getElementById("password").value = "";
-    
-  } catch(err){
-    msgDiv.innerHTML = "<span style='color:red'>Error: "+err+"</span><br>But check Sheet - may be saved anyway!";
-  }
+    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
+    msg.innerHTML='<span style="color:green">✅ Registered! Date auto-saved.</span>';
+    const text=`Welcome ${shopName}!%0AOwner: ${owner}%0APhone: ${phone}%0APassword: ${password}%0ALocation: ${location}%0A%0ALogin: https://mogie890.github.io/Raitkads/reseller.html`;
+    setTimeout(()=>{window.open(`https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${text}`,'_blank');loadShops();},800);
+    document.getElementById('shopName').value='';document.getElementById('owner').value='';document.getElementById('phone').value='';document.getElementById('location').value='';document.getElementById('password').value='';
+  }catch(e){msg.innerHTML='<span style="color:red">Error but may be saved. Refresh.</span>';loadShops();}
 }
-function afterCreate(res){
-document.getElementById('createMsg').innerHTML='<p style="color:green">✅ Created! Opening WhatsApp...</p>';
-var msg='*TELIKOM RAITKAD - Your Shop Login*%0A%0AShop: '+encodeURIComponent(window._newShop.shopName)+'%0APassword: '+encodeURIComponent(window._newShop.password)+'%0A%0ALogin here: '+encodeURIComponent(RESELLER_LOGIN_LINK)+'%0A%0AThank you!';
-var wa='https://wa.me/'+window._newShop.phone.replace(/[^0-9]/g,'')+'?text='+msg;
-window.open(wa,'_blank');
-document.getElementById('shopName').value='';document.getElementById('shopPhone').value='';document.getElementById('password').value='';document.getElementById('owner').value='';
+async function loadShops(){
+  try{
+    const res=await fetch(SCRIPT_URL+'?action=getShops');
+    const data=await res.json();
+    allShops=data; renderTable(data);
+  }catch(e){document.getElementById('count').innerText='Error loading - check deployment';}
 }
-function deleteShop(row){
-if(!confirm('Delete this shop?'))return;
-var s=document.createElement('script'); s.src=SHEET_URL+'?type=deleteShop&rowIndex='+row+'&callback=viewShops&_='+Date.now(); document.body.appendChild(s);
+function renderTable(list){
+  const tbody=document.querySelector('#shopTable tbody'); tbody.innerHTML='';
+  list.forEach(s=>{
+    const tr=document.createElement('tr'); const d=s.date?new Date(s.date).toLocaleString():'';
+    tr.innerHTML=`<td>${s.shopName}</td><td>${s.owner}</td><td>${s.phone}</td><td>${s.location}</td><td>${s.password}</td><td>${d}</td>`;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('count').innerText=`Total: ${list.length} resellers`;
 }
-function loadOrders(){
-document.getElementById('ordersData').innerHTML='Loading orders...';
-var s=document.createElement('script'); s.src=SHEET_URL+'?type=getOrders&callback=showOrders&_='+Date.now(); document.body.appendChild(s);
+function filterTable(){
+  const q=document.getElementById('search').value.toLowerCase();
+  const filtered=allShops.filter(s=>(s.shopName+s.owner+s.phone+s.location).toLowerCase().includes(q));
+  renderTable(filtered);
 }
-function showOrders(data){
-if(!data||data.length<=1){document.getElementById('ordersData').innerHTML='<p>No orders yet.</p>';return;}
-var html='';for(var i=data.length-1;i>=1;i--){var r=data[i]; html+='<div class="order-card"><b>'+(r[1]||'')+'</b> - '+(r[2]||'')+'<br><small>'+(r[0]||'')+' | '+(r[5]||'')+'</small></div>';}
-document.getElementById('ordersData').innerHTML=html;
+function exportExcel(){
+  if(!allShops.length){alert('No data');return;}
+  let csv='ShopName,Owner,Phone,Location,Password,DateRegistered\n';
+  allShops.forEach(s=>{csv+=`"${s.shopName}","${s.owner}","${s.phone}","${s.location}","${s.password}","${s.date}"\n`;});
+  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='resellers_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
 }
-function exportExcel(){viewShops(); setTimeout(()=>{alert('Export: Use Google Sheet File > Download')},500);}
-if(!localStorage.getItem('admin')){location.href='adminlogin.html';}
+function logout(){localStorage.removeItem('isAdmin');location.href='adminlogin.html';}
+loadShops();
 </script></body></html>
