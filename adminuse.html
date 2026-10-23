@@ -1,77 +1,72 @@
 <!DOCTYPE html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Admin - Resellers</title>
-<style>
-body{font-family:Arial;background:#f1f5f9;margin:0}header{background:#0f172a;color:white;padding:15px;display:flex;justify-content:space-between} .container{padding:20px;max-width:1100px;margin:auto} .card{background:white;padding:20px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:20px}
-input{padding:10px;margin:6px 0;border-radius:8px;border:1px solid #cbd5e1;width:100%;box-sizing:border-box}button{padding:10px 16px;border:none;border-radius:8px;cursor:pointer;font-weight:bold} .btn-green{background:#22c55e;color:white} .btn-blue{background:#3b82f6;color:white} .btn-dark{background:#0f172a;color:white}
-table{width:100%;border-collapse:collapse;margin-top:10px}th,td{padding:10px;border-bottom:1px solid #e2e8f0;text-align:left;font-size:14px}th{background:#f8fafc}
-</style>
-</head><body>
-<header><span>RAIT Admin - Reseller Management</span><button onclick="logout()" style="background:#ef4444;color:white">Logout</button></header>
-<div class="container">
-  <div class="card"><h3>A. Register New Reseller</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <input id="shopName" placeholder="Shop Name *"><input id="owner" placeholder="Owner Name *">
-      <input id="phone" placeholder="Phone / WhatsApp *"><input id="location" placeholder="Location *">
-      <input id="password" placeholder="Password *" type="text">
-    </div>
-    <button class="btn-green" onclick="createShop()" style="margin-top:12px;width:100%">Register & Send WhatsApp</button><p id="createMsg"></p>
-  </div>
-  <div class="card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap"><h3>B. Customer List View</h3>
-    <div><input id="search" placeholder="Search shop, owner, phone..." onkeyup="filterTable()" style="width:200px"><button class="btn-blue" onclick="exportExcel()" style="margin-left:8px">Extract Excel (CSV)</button><button class="btn-dark" onclick="loadShops()">Refresh</button></div></div>
-    <div style="overflow:auto"><table id="shopTable"><thead><tr><th>ShopName</th><th>Owner</th><th>Phone</th><th>Location</th><th>Password</th><th>Date Registered</th></tr></thead><tbody></tbody></table></div><p id="count"></p>
-  </div>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAIT Admin - Reseller Management</title>
+<style>body{font-family:sans-serif;background:#f5f7fb;margin:0;padding:12px}.card{background:#fff;padding:16px;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);margin-bottom:16px}input{padding:10px;border:1px solid #ccc;border-radius:8px;width:100%;box-sizing:border-box;margin-bottom:8px}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}button{padding:10px 14px;border:none;border-radius:8px;font-weight:700;cursor:pointer}.green{background:#22c55e;color:#fff;width:100%}.blue{background:#3b82f6;color:#fff}.dark{background:#111827;color:#fff}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}</style>
+</head>
+<body>
+<div class="card">
+<h3>A. Register New Reseller</h3>
+<div class="row"><input id="shopName" placeholder="Shop Name *"><input id="owner" placeholder="Owner Name *"></div>
+<div class="row"><input id="phone" placeholder="Phone / WhatsApp *"><input id="location" placeholder="Location *"></div>
+<input id="password" placeholder="Password *" style="max-width:49%">
+<button class="green" id="btnReg" onclick="register()">Register & Send WhatsApp</button>
+<div id="msgA" style="margin-top:8px;color:#16a34a;font-weight:700"></div>
 </div>
+
+<div class="card">
+<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:space-between;align-items:center"><h3>B. Customer List View</h3>
+<div><input id="q" placeholder="Search shop, owner, phone..." style="width:200px;display:inline-block"><button class="blue" onclick="exportCSV()">Extract Excel (CSV)</button> <button class="dark" onclick="loadShops()">Refresh</button></div>
+</div>
+<table><thead><tr><th>ShopName</th><th>Owner</th><th>Phone</th><th>Location</th><th>Password</th><th>Date Registered</th></tr></thead><tbody id="tbody"><tr><td colspan=6>Loading...</td></tr></tbody></table>
+<div id="msgB"></div>
+</div>
+
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTaiPH47zsnGbkSEHlPet72XrfZIvjmTdGirhS4tWLcj-tNhpSz5otG5k6_61UDZ-W_A/exec";
-if(!localStorage.getItem('isAdmin')) location.href='adminlogin.html';
 let allShops=[];
-async function createShop(){
-  const shopName=document.getElementById('shopName').value.trim();
-  const owner=document.getElementById('owner').value.trim();
-  const phone=document.getElementById('phone').value.trim();
-  const location=document.getElementById('location').value.trim();
-  const password=document.getElementById('password').value.trim();
-  const msg=document.getElementById('createMsg');
-  if(!shopName||!owner||!phone||!location||!password){alert('Fill all');return;}
-  msg.innerText='Creating...';
-  const payload={action:'createShop',shopName,owner,phone,location,password};
-  try{
-    await fetch(SCRIPT_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)});
-    msg.innerHTML='<span style="color:green">✅ Registered! Date auto-saved.</span>';
-    const text=`Welcome ${shopName}!%0AOwner: ${owner}%0APhone: ${phone}%0APassword: ${password}%0ALocation: ${location}%0A%0ALogin: https://mogie890.github.io/Raitkads/reseller.html`;
-    setTimeout(()=>{window.open(`https://wa.me/${phone.replace(/[^0-9]/g,'')}?text=${text}`,'_blank');loadShops();},800);
-    document.getElementById('shopName').value='';document.getElementById('owner').value='';document.getElementById('phone').value='';document.getElementById('location').value='';document.getElementById('password').value='';
-  }catch(e){msg.innerHTML='<span style="color:red">Error but may be saved. Refresh.</span>';loadShops();}
+
+async function register(){
+ const btn=document.getElementById('btnReg');
+ const data={action:"createShop", shopName:shopName.value.trim(), owner:owner.value.trim(), phone:phone.value.trim(), location:location.value.trim(), password:password.value.trim()};
+ if(!data.shopName||!data.owner||!data.phone||!data.location||!data.password){alert("Fill all");return;}
+ btn.disabled=true; btn.textContent="Creating...";
+ try{
+   const res=await fetch(SCRIPT_URL,{method:"POST", body:JSON.stringify(data)});
+   const j=await res.json();
+   if(j.status==="success"){msgA.textContent="✅ Registered! Date auto-saved."; loadShops(); if(data.phone){window.open(`https://wa.me/${data.phone.replace(/[^0-9]/g,'')}?text=Welcome ${data.shopName}! Your login: ${data.shopName} / ${data.password}`,'_blank');} shopName.value=owner.value=phone.value=location.value=password.value="";}
+   else msgA.textContent="❌ "+j.message;
+ }catch(e){msgA.textContent="❌ Error: "+e.message;}
+ btn.disabled=false; btn.textContent="Register & Send WhatsApp";
 }
+
 async function loadShops(){
-  try{
-    const res=await fetch(SCRIPT_URL+'?action=getShops');
-    const data=await res.json();
-    allShops=data; renderTable(data);
-  }catch(e){document.getElementById('count').innerText='Error loading - check deployment';}
+ tbody.innerHTML="<tr><td colspan=6>Loading...</td></tr>";
+ try{
+   const res=await fetch(SCRIPT_URL+"?action=getShops");
+   const shops=await res.json();
+   allShops=shops;
+   render(shops);
+ }catch(e){tbody.innerHTML="<tr><td colspan=6>Error loading - check deployment: "+e.message+"</td></tr>";}
 }
-function renderTable(list){
-  const tbody=document.querySelector('#shopTable tbody'); tbody.innerHTML='';
-  list.forEach(s=>{
-    const tr=document.createElement('tr'); const d=s.date?new Date(s.date).toLocaleString():'';
-    tr.innerHTML=`<td>${s.shopName}</td><td>${s.owner}</td><td>${s.phone}</td><td>${s.location}</td><td>${s.password}</td><td>${d}</td>`;
-    tbody.appendChild(tr);
-  });
-  document.getElementById('count').innerText=`Total: ${list.length} resellers`;
+
+function render(list){
+ if(!list.length){tbody.innerHTML="<tr><td colspan=6>No data</td></tr>";return;}
+ tbody.innerHTML=list.map(s=>`<tr><td>${s.shopName}</td><td>${s.owner}</td><td>${s.phone}</td><td>${s.location}</td><td>${s.password}</td><td>${new Date(s.date).toLocaleString()}</td></tr>`).join('');
 }
-function filterTable(){
-  const q=document.getElementById('search').value.toLowerCase();
-  const filtered=allShops.filter(s=>(s.shopName+s.owner+s.phone+s.location).toLowerCase().includes(q));
-  renderTable(filtered);
+
+q.addEventListener('input',()=>{const v=q.value.toLowerCase(); render(allShops.filter(s=> (s.shopName+s.owner+s.phone+s.location).toLowerCase().includes(v)));});
+
+function exportCSV(){
+ if(!allShops.length){alert("No data");return;}
+ let csv="ShopName,Owner,Phone,Location,Password,Date Registered\n";
+ csv+=allShops.map(s=>`"${s.shopName}","${s.owner}","${s.phone}","${s.location}","${s.password}","${s.date}"`).join("\n");
+ const blob=new Blob([csv],{type:"text/csv"}); const url=URL.createObjectURL(blob);
+ const a=document.createElement("a"); a.href=url; a.download="Raitkads_Customers_"+new Date().toISOString().slice(0,10)+".csv"; a.click();
 }
-function exportExcel(){
-  if(!allShops.length){alert('No data');return;}
-  let csv='ShopName,Owner,Phone,Location,Password,DateRegistered\n';
-  allShops.forEach(s=>{csv+=`"${s.shopName}","${s.owner}","${s.phone}","${s.location}","${s.password}","${s.date}"\n`;});
-  const blob=new Blob([csv],{type:'text/csv'}); const url=URL.createObjectURL(blob);
-  const a=document.createElement('a');a.href=url;a.download='resellers_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-}
-function logout(){localStorage.removeItem('isAdmin');location.href='adminlogin.html';}
+
 loadShops();
-</script></body></html>
+</script>
+</body>
+</html>
